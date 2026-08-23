@@ -1,0 +1,24 @@
+{
+  "commit": "36cb178a0f69dba8bfc03a99c10512831edf1c6b",
+  "git_blob_ids": {
+    "LICENSES/CC-BY-SA-4.0.txt": "835a6836b385fa068fdd625685548845cda60c2f",
+    "NGC.csv": "308d80f93c2d4cc34d339125b374506230555936",
+    "NGC_guide.txt": "7e5e1447c3cccd54cd5cbebb29387e5b30b05cc1",
+    "addendum.csv": "564c669f441b9be35dc4c1ee3b6348acde3464c2"
+  },
+  "license": "CC-BY-SA-4.0",
+  "release_url": "https://github.com/mattiaverga/OpenNGC/tree/v20260501",
+  "retrieval_date": "2026-07-26",
+  "row_counts": {
+    "NGC.csv": 13969,
+    "addendum.csv": 64
+  },
+  "sha256": {
+    "LICENSES/CC-BY-SA-4.0.txt": "cde7883b9050a1104f4ac19a1572aafd6e5d7323b68351aaf51fbf4beba54966",
+    "NGC.csv": "840fe0c9ee1332e551b2e722a0e92726cd7b157914a3d2177602832aadd3aa9e",
+    "NGC_guide.txt": "b7fca022985daa0f41a8bc8dd7028513e4db9ca96a2cfc380b68ff4c2e812810",
+    "addendum.csv": "1d8f0914e643ada325a5a94d88d8fefad6a4937a2f77cc34f21483af22b11983"
+  },
+  "source": "OpenNGC",
+  "tag": "v20260501"
+}

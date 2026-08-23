@@ -1,0 +1,23 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(tests/fixtures/.*\.fit|tools/data/openngc-.*)$
+      - id: end-of-file-fixer
+        exclude: ^(tests/fixtures/.*\.fit|tools/data/openngc-.*)$
+      - id: check-yaml
+      - id: check-added-large-files
+        # baseline "before" images and evidence-archive images are committed
+        # on purpose (validation/README.md, docs/assessments/2026-07-15-evidence-manifest.md)
+        # vendored upstream OpenNGC source is committed verbatim (source pin)
+        exclude: ^(validation/(baselines|evidence)/.*\.jpg|tools/data/openngc-.*)$
+      - id: check-merge-conflict
+      - id: debug-statements
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.11
+    hooks:
+      - id: ruff
+        args: ["--fix", "--select", "E,F,I,B,UP", "--ignore", "E501"]
+      - id: ruff-format

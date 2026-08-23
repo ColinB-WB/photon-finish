@@ -1,0 +1,113 @@
+/* Photon Finish theme — indigo accent + slate neutrals + OS system fonts
+   (offline-safe, native feel). Dark via prefers-color-scheme: our own CSS,
+   no ?__theme workaround (spec §7). No inline styles anywhere (CSP). */
+
+:root {
+  --accent: #4f46e5;
+  --accent-press: #4338ca;
+  --bg: #f8fafc;
+  --panel: #ffffff;
+  --text: #0f172a;
+  --text-subdued: #64748b;
+  --border: #e2e8f0;
+  --danger: #b91c1c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1120;
+    --panel: #111a2e;
+    --text: #e2e8f0;
+    --text-subdued: #94a3b8;
+    --border: #24324d;
+    --danger: #f87171;
+  }
+}
+
+* { box-sizing: border-box; }
+/* Author display rules (flex/grid below) override the UA's [hidden] {display:none}
+   — without this, #lightbox and #quit-row render permanently despite `hidden`. */
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 15px;
+}
+#app-header { padding: 16px 24px 4px; max-width: 1180px; margin: auto; }
+#app-header .title { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+#app-header .title .glyph { margin-right: 8px; }
+#app-header .sub { color: var(--text-subdued); font-size: 14px; margin-top: 4px; }
+
+main { display: flex; gap: 16px; padding: 14px 24px 24px; max-width: 1180px; margin: auto; align-items: flex-start; }
+.card {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  background: var(--panel);
+}
+.card.wide { flex: 2; }
+h3 { margin: 14px 0 4px; font-size: 16px; }
+h4 { margin: 12px 0 4px; font-size: 14px; }
+.section-note { color: var(--text-subdued); font-size: 13px; margin: 2px 0 10px; }
+.hint { color: var(--text-subdued); font-size: 12px; display: block; margin-top: 3px; }
+
+.row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px; }
+.field { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.field.grow { flex: 1; }
+input[type="text"], select {
+  display: block; width: 100%; margin-top: 5px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg); color: var(--text); font-size: 14px;
+}
+button {
+  font: inherit; font-weight: 600; padding: 9px 14px; border-radius: 9px;
+  border: 1px solid var(--border); background: var(--panel); color: var(--text);
+  cursor: pointer;
+}
+button:disabled { opacity: 0.55; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; width: 100%; margin-top: 8px; }
+button.primary:not(:disabled):hover { background: var(--accent-press); }
+button.secondary { width: 100%; margin-top: 4px; }
+button.danger { color: var(--danger); }
+
+.target-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 5px; }
+.target-table th, .target-table td {
+  border-bottom: 1px solid var(--border); padding: 9px 8px; text-align: left; white-space: nowrap;
+}
+.target-table th { color: var(--text-subdued); font-weight: 650; }
+#targets { overflow-x: auto; }
+.empty-table {
+  border: 1px dashed var(--border); border-radius: 9px; color: var(--text-subdued);
+  padding: 16px; text-align: center;
+}
+
+#status { min-height: 42px; white-space: pre-wrap; }
+#status.degraded { color: var(--danger); font-weight: 600; }
+
+.gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; min-height: 240px; }
+.gallery figure { margin: 0; }
+.gallery img { width: 100%; border-radius: 8px; display: block; cursor: zoom-in; }
+.gallery figcaption { font-size: 12px; color: var(--text-subdued); margin-top: 3px; display: flex; justify-content: space-between; }
+.gallery figcaption a { color: var(--accent); text-decoration: none; }
+
+#qa { margin-top: 14px; }
+#qa h4 { margin: 14px 0 2px; }
+#qa .warn { margin: 4px 0; }
+#qa details { margin: 6px 0; color: var(--text-subdued); }
+#qa table { border-collapse: collapse; font-size: 13px; }
+#qa td, #qa th { border-bottom: 1px solid var(--border); padding: 5px 8px; text-align: left; }
+#qa hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+#lightbox {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
+  display: flex; align-items: center; justify-content: center; cursor: zoom-out;
+}
+#lightbox img { max-width: 95vw; max-height: 95vh; }
+
+@media (max-width: 860px) {
+  main { flex-direction: column; }
+  #app-header .title { font-size: 21px; }
+  .card { padding: 12px; width: 100%; }
+}

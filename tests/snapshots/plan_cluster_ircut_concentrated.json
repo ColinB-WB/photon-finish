@@ -1,0 +1,209 @@
+{
+  "color": {
+    "accepted": false,
+    "attempted": false,
+    "evidence": null,
+    "fallback": false,
+    "qualified": false,
+    "reason": "policy_off"
+  },
+  "deliverables": [
+    {
+      "name": "M5_final.tif",
+      "role": "deliverable"
+    },
+    {
+      "name": "M5_final.png",
+      "role": "deliverable"
+    },
+    {
+      "name": "M5_final.jpg",
+      "role": "deliverable"
+    }
+  ],
+  "solve": {
+    "achieved": 10.360000000000014,
+    "asinh_d": 65,
+    "blackpoint": 0.014805,
+    "bp_iterations": 0,
+    "bp_pinned": false,
+    "converged": true,
+    "ght_in_probe": true,
+    "level_base": 10,
+    "level_scale": 1.0,
+    "metric": "sky_median",
+    "mtf_mid": 0.2428,
+    "mtf_pinned": null,
+    "nonmonotonic": false,
+    "probes": [
+      {
+        "blackpoint": 0.014805,
+        "distance": 140.5,
+        "mtf_mid": 0.135,
+        "phase": "mtf",
+        "sky": 7.525,
+        "target_level": 10.0,
+        "value": 150.5
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 65.75,
+        "mtf_mid": 0.1925,
+        "phase": "mtf",
+        "sky": 3.7875,
+        "target_level": 10.0,
+        "value": 75.75
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 28.31,
+        "mtf_mid": 0.2213,
+        "phase": "mtf",
+        "sky": 1.9155000000000002,
+        "target_level": 10.0,
+        "value": 38.31
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 9.72,
+        "mtf_mid": 0.2356,
+        "phase": "mtf",
+        "sky": 0.9859999999999985,
+        "target_level": 10.0,
+        "value": 19.71999999999997
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 0.36,
+        "mtf_mid": 0.2428,
+        "phase": "mtf",
+        "sky": 0.5180000000000007,
+        "target_level": 10.0,
+        "value": 10.360000000000014
+      }
+    ],
+    "region_area_frac": null,
+    "region_source": null,
+    "sky": 0.5180000000000007,
+    "target_level": 10.0
+  },
+  "steps": [
+    {
+      "op": "PrepareSource",
+      "output": {
+        "name": "working_copy",
+        "role": "source"
+      },
+      "session_index": 0
+    },
+    {
+      "height": 1080,
+      "input": {
+        "name": "working_copy",
+        "role": "source"
+      },
+      "mirror_x": true,
+      "op": "Crop",
+      "output": {
+        "name": "cropped",
+        "role": "production"
+      },
+      "width": 1920,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "correction": "Subtraction",
+      "input": {
+        "name": "cropped",
+        "role": "production"
+      },
+      "op": "BackgroundExtract",
+      "output": {
+        "name": "bge",
+        "role": "production"
+      },
+      "smoothing": 0.5
+    },
+    {
+      "input": {
+        "name": "bge",
+        "role": "production"
+      },
+      "op": "Denoise",
+      "output": {
+        "name": "denoised",
+        "role": "production"
+      },
+      "strength": 0.6
+    },
+    {
+      "input": {
+        "name": "denoised",
+        "role": "production"
+      },
+      "op": "ColorCalibrate",
+      "output": {
+        "name": "linear_master",
+        "role": "production"
+      },
+      "pcc": false
+    },
+    {
+      "asinh_d": 65,
+      "black_lift": 0.0,
+      "blackpoint": 0.014805,
+      "ght": {
+        "b": 5.0,
+        "closeup": false,
+        "d": 1.5,
+        "hp": 0.7,
+        "lp": 0.05,
+        "sp": 0.2,
+        "unsharp_amount": 0.0,
+        "unsharp_sigma": 0.0
+      },
+      "input": {
+        "name": "linear_master",
+        "role": "production"
+      },
+      "mtf_mid": 0.2428,
+      "op": "StretchRender",
+      "output": {
+        "name": "stretched",
+        "role": "production"
+      },
+      "saturation": 0.55
+    },
+    {
+      "formats": [
+        "tif",
+        "png",
+        "jpg"
+      ],
+      "input": {
+        "name": "stretched",
+        "role": "production"
+      },
+      "jpg_quality": 95,
+      "op": "Export",
+      "output_base": "M5_final",
+      "role": "deliverable"
+    },
+    {
+      "input": {
+        "name": "stretched",
+        "role": "production"
+      },
+      "op": "SeparateStars",
+      "starless": {
+        "name": "M5_starless",
+        "role": "qa"
+      },
+      "stars": {
+        "name": "cluster_stars",
+        "role": "production"
+      }
+    }
+  ]
+}

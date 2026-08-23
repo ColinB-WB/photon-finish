@@ -1,0 +1,104 @@
+[project]
+name = "photon-finish"
+# Single version source: seestar/__init__.py __version__ (recipes stamp it as
+# engine_version; tests/test_version.py asserts metadata agrees with runtime).
+dynamic = ["version"]
+description = "Target-agnostic processing pipeline for ZWO Seestar S30 stacked FITS"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Colin Bryar" }]
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "tools/data/openngc-v20260501/LICENSES/CC-BY-SA-4.0.txt"]
+dependencies = [
+    # Thin wrappers shell out to GraXpert / Siril / StarNet2 / exiftool, but the
+    # inspect/measure stages read FITS and compute stats in-process.
+    "PyYAML>=6.0",
+    "astropy>=6.0",
+    "numpy>=1.24",
+    "pillow>=10.0",
+    "tifffile>=2024.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ColinB-WB/photon-finish"
+Documentation = "https://colinb-wb.github.io/photon-finish/"
+Repository = "https://github.com/ColinB-WB/photon-finish"
+Issues = "https://github.com/ColinB-WB/photon-finish/issues"
+
+[project.optional-dependencies]
+# ruff is pinned to the .pre-commit-config.yaml rev so every contributor's check-only
+# run reproduces the enforced formatter (upgrade both together — see defer D-03).
+# vulture powers the dead-code gate (definitive command: packaging/vulture_allowlist.py).
+# mypy is pinned like ruff: the gate must be reproducible, and a minor release
+# that adds an inference rule would otherwise turn CI red on untouched code.
+dev = ["pytest>=8.0", "ruff==0.12.11", "pre-commit>=4.0", "vulture==2.16", "httpx>=0.27,<1", "mypy==2.3.1"]
+# FastAPI + uvicorn serve the local GUI (browser mode works everywhere and keeps
+# the base install lean). pywebview (the `desktop` extra) adds the native window
+# on macOS/Windows; it drags pyobjc on macOS, so it stays out of base and `gui`
+# (spec §9). Build scripts install .[gui,desktop].
+gui = ["fastapi>=0.141,<1", "uvicorn>=0.52,<1"]
+desktop = ["pywebview>=6.2.1,<7"]
+docs = ["mkdocs>=1.6,<2", "mkdocs-material>=9.5,<10"]
+
+[project.scripts]
+seestar = "seestar.cli:main"
+seestar-gui = "seestar.gui:main"
+
+[tool.pytest.ini_options]
+# Put the repo root on sys.path so `tests/` is importable as a namespace package
+# (several tests do `from tests.conftest import ...`). Without this, a BARE `pytest`
+# invocation (as CI runs) interrupts collection with `ModuleNotFoundError: No module
+# named 'tests'`; only `python -m pytest` worked (it prepends cwd). This makes both
+# invocations collect identically. See tests/test_adapters_exec.py.
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ARG001", "ARG002"]
+# Vulture whitelist idiom: bare `Class.attr` expressions mark an attribute as
+# used for Vulture's AST scan; they are never executed (not imported by any
+# package `__init__.py`, not collected by pytest's `testpaths = ["tests"]`).
+"packaging/vulture_allowlist.py" = ["B018"]
+
+# Type checking is scoped to `seestar/core/` ONLY, and strictly.
+#
+# The core is the pure functional half — frozen dataclasses in, typed work items
+# out, no I/O — so it is the one place where a type slip becomes a WRONG DECISION
+# rather than a crash, and the one place where strict mode is affordable: it is
+# clean today (2026-08-20), so this gate prevents drift instead of demanding a
+# cleanup project.
+#
+# The shell is deliberately NOT checked. It passes `cfg`/`insp`/`params`/`notes`
+# around as plain dicts, so mypy would have little to say there until those become
+# TypedDicts or dataclasses — a real refactor, and the honest prerequisite for
+# widening this scope. Do that first; do not widen the gate and suppress the noise.
+[tool.mypy]
+files = ["seestar/core"]
+strict = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["seestar*"]
+
+[tool.setuptools.package-data]
+"seestar.data" = ["*.json", "*.yaml", "*.md", "*.txt"]
+"seestar.gui" = ["static/*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "seestar.__version__" }

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "source": "TEST FIXTURE -- the catalog-absent control (spec sec7): a structurally valid, fully-formed header with zero records. Not product data; do not ship.",
+    "license": "CC-BY-SA-4.0 (OpenNGC) -- see THIRD_PARTY_NOTICES.md if the real catalog ships in v1.0",
+    "generated": "hand-authored for tests/test_known_targets_ablation.py (Task 9); schema matches tools/build_known_targets.py output",
+    "content_hash": "n/a (test fixture)",
+    "curation_schema_version": 1,
+    "note": "Deliberately empty: exercises the load_catalog()->() path via real JSON parsing (as opposed to a missing/corrupt resource, which never reaches JSON parsing at all) -- both must degrade identically to local_catalog_unavailable (spec sec5.7)."
+  },
+  "records": []
+}

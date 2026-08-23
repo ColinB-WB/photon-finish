@@ -1,0 +1,15 @@
+# config.example.yaml — copy to config.local.yaml (git-ignored) and edit.
+#
+# config.local.yaml is deep-merged over config.yaml by io.load_config(). Use it for
+# machine-specific values you must NOT commit — chiefly the reference-capture raw
+# paths used by `seestar validate`. Only maintainers running back-validation need this;
+# the engine and the app run fine without it.
+validation:
+  # Non-macOS raw paths (Windows/Linux). A target may be a folder or a single .fit file.
+  targets:
+    M8: "C:/path/to/your/SeestarLibrary/M8"
+    # ... add your own reference targets
+  # macOS raw paths (sys.platform == "darwin"); these win over `targets` on a Mac.
+  targets_darwin:
+    M8: "/Users/you/path/to/SeeStar Photos/M8"
+    # ... add your own reference targets

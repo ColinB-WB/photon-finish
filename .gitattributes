@@ -1,0 +1,6 @@
+# These vendored OpenNGC files are byte-pinned in tools/build_known_targets.py.
+# Preserve their reviewed bytes on every platform; never rewrite line endings.
+/tools/data/openngc-v20260501/NGC.csv -text
+/tools/data/openngc-v20260501/addendum.csv -text
+/tools/data/openngc-v20260501/NGC_guide.txt -text
+/tools/data/openngc-v20260501/LICENSES/CC-BY-SA-4.0.txt -text

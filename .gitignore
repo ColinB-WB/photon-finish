@@ -1,0 +1,75 @@
+# Image data — never commit (large; lives with the photos, not the code)
+*.fit
+*.fits
+*.tif
+*.tiff
+*.jpg
+*.jpeg
+*.png
+*.xisf
+*.ser
+*.cr2
+*.raw
+
+# Committed test fixtures — small real crops intentionally tracked (tests/fixtures/README.md)
+!tests/fixtures/*.fit
+
+# Pipeline run artifacts
+runs/
+**/processed/
+**/*_debug/
+
+# Back-validation render scratch (baselines/ *_qa.json AND baseline JPGs ARE tracked --
+# a baseline without its image can't be eyeball-compared, the M100 lesson)
+validation/scratch/
+!validation/baselines/*.jpg
+!validation/evidence/**/*.jpg
+# macOS back-validation baselines: machine-specific, not comparable to the committed
+# Windows baselines above -- never commit them over the reference set.
+validation/baselines-mac/
+
+# Scratch / dev harnesses (reproducible, not part of the package)
+scratch_*.py
+
+# Machine-specific config overlay (real reference-capture paths) — never commit
+config.local.yaml
+
+# Real personal-info scan tokens (machine-specific leaks) — never commit; see .personal-tokens.example
+.personal-tokens
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# macOS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# macOS app packaging (build artifacts; scripts in packaging/ ARE tracked)
+.venv-build/
+*.spec
+dist/
+build/
+
+# D2a experiment: scratch is machine-specific & disposable; Mac baseline sheets are committed.
+validation/d2a/scratch/
+!validation/d2a/baselines-mac/*.png
+.venv-skel/
+.venv-skel-build/
+.venv-lock/
+
+# Local render scratch: the default output root and temp dir when the tool is run
+# from the repo. Never committed -- and while untracked they were scanned by the
+# pre-copy personal-info gate and by ruff, producing a standing false failure.
+output/
+tmp/

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "source": "TEST FIXTURE -- exercises the two spec sec5.5 conflict branches: one record whose OWN stored position is invalid (spatially_impossible), and one record that is plausibly positioned but whose category disagrees with the pipeline's own authoritative category (type_disagreement). Not product data; do not ship.",
+    "license": "CC-BY-SA-4.0 (OpenNGC) -- see THIRD_PARTY_NOTICES.md if the real catalog ships in v1.0",
+    "generated": "hand-authored for tests/test_known_targets_ablation.py (Task 9); schema matches tools/build_known_targets.py output",
+    "content_hash": "n/a (test fixture)",
+    "curation_schema_version": 1,
+    "note": "badcoord1: dec_deg=95.5 is outside the physically valid +/-90deg range -- classify_conflict() must return spatially_impossible and the shell must reject the entry (treat as a local miss). typeconflict1: plausibly positioned (a valid RA/Dec a test frame's WCS can match) but classified 'galaxy' where the frame's filter/measurement is authoritative for a different category -- classify_conflict() must return type_disagreement (identity kept, hint dropped, warn, generic/measured path)."
+  },
+  "records": [
+    {
+      "entry_id": "badcoord1",
+      "canonical_id": "BADCOORD1",
+      "common_name": null,
+      "aliases": [],
+      "equivalent_ids": [],
+      "classification": {"family": "starfield", "source": "test-fixture (deliberately invalid)"},
+      "ra_deg": 270.0,
+      "dec_deg": 95.5,
+      "extent_major_arcmin": 10.0,
+      "extent_minor_arcmin": null,
+      "search_footprints": [],
+      "morphology_traits": [],
+      "associated": [],
+      "provenance": {
+        "identity": "test-fixture",
+        "classification": "test-fixture",
+        "coordinates": "test-fixture (deliberately invalid: dec_deg outside [-90, 90])",
+        "footprint": "n/a",
+        "morphology": "n/a"
+      }
+    },
+    {
+      "entry_id": "typeconflict1",
+      "canonical_id": "TYPECONFLICT1",
+      "common_name": null,
+      "aliases": [],
+      "equivalent_ids": [],
+      "classification": {"family": "galaxy", "source": "test-fixture (deliberately conflicting)"},
+      "ra_deg": 270.922,
+      "dec_deg": -24.3802,
+      "extent_major_arcmin": 20.0,
+      "extent_minor_arcmin": 12.0,
+      "search_footprints": [],
+      "morphology_traits": [],
+      "associated": [],
+      "provenance": {
+        "identity": "test-fixture",
+        "classification": "test-fixture (deliberately disagrees with the LP filter-law nebula category)",
+        "coordinates": "test-fixture (matches an M8-position LP test frame so the spatial match is plausible)",
+        "footprint": "n/a",
+        "morphology": "n/a"
+      }
+    }
+  ]
+}

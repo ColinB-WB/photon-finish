@@ -1,0 +1,405 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# INTERNAL CONFIGURATION — not user-facing.
+# Users tune the pipeline via preferences.yaml (run: seestar config template).
+# See dev-notes/ for the rationale behind specific values.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# External tool paths — leave empty for auto-detection (recommended).
+# Resolution order: SEESTAR_SIRIL / SEESTAR_GRAXPERT / SEESTAR_STARNET2 / SEESTAR_EXIFTOOL
+# env vars → these config values → shutil.which() → known platform defaults.
+# Run `seestar doctor` to see exactly which path was found for each tool.
+# Set a value here only if the tool is installed somewhere auto-detection can't reach.
+tools:
+  siril:    ""
+  graxpert: ""
+  starnet2: ""
+  exiftool: ""
+  # Wall-clock deadline per tool invocation, seconds (H1 foundation, Task 3).
+  # Absolute deadline only -- no idle-output timeout, no hardware-based estimate.
+  # Code defaults live in seestar.adapters.base.ToolTimeouts; these values mirror
+  # them for discoverability. Every value must be a positive finite number.
+  timeout_s:
+    siril: 1800
+    graxpert: 3600
+    starnet2: 3600
+    exiftool: 120
+
+graxpert:
+  bge_model: "1.0.1"
+  denoise_model: "3.0.2"
+
+# Content-adaptive engine defaults. These are starting points the pipeline
+# derives from measurement; most are overrideable via preferences.yaml.
+engine:
+  # Border crop is MEASURED per edge (zero on a clean frame); an explicit
+  # crop_border_frac here would force the legacy fixed symmetric crop instead.
+  # crop_max_auto_frac bounds any automatically measured trim per edge.
+  crop_max_auto_frac: 0.05
+  bge: { smoothing: 0.5, correction: "Subtraction" }
+
+  # Denoise strength per category. Higher reveals more faint stars (counter-
+  # intuitively) by lifting signal above findstar's threshold, while also
+  # tightening star FWHM. 0.6 is the cap: past ~0.7 dense cores over-smooth.
+  denoise: { base: 0.5, nebula: 0.6, starfield: 0.6, galaxy: 0.65, noisy_bonus: 0.1 }
+
+  stretch:
+    # INVARIANT: bp must stay just BELOW the sky median (factor < 1.0).
+    # A factor above 1.0 clips the faint star field to black along with the sky.
+    blackpoint_factor: 0.987      # bp = factor × background median (measured on the linear master)
+
+    # Per-category contrast shape for asinh. Measured and locked per category.
+    asinh_d: { nebula: 75, galaxy: 55, starfield: 65 }
+
+    # Search seed for the mtf solver (solve_stretch: true). When the solver
+    # is enabled these values are not used directly — the solver finds the mtf
+    # that hits `target` below. Only active as fallback when solver is off.
+    mtf_mid: { nebula: 0.08, galaxy: 0.11, starfield: 0.08 }
+    noisy_mtf_delta: 0.03         # noisy SNR class, SOLVER-OFF fallback only: raise mtf mid (= dimmer)
+    noisy_level_scale: 0.92       # noisy SNR class, solver path: dim via the target level (direction-safe)
+
+    # Brightness targets for the adaptive solver. The solver binary-searches
+    # mtf until the rendered output hits `level` on `metric`.
+    # These are the single tuning knob for overall brightness per category:
+    # raise to brighten everything, lower to darken.
+    # `sky_ceiling` (extended targets) arms the TWO-POINT solve (2026-07): if the
+    # body-solved render leaves the sky brighter than this, the black point is
+    # raised (never past the sky median) and re-solved until the sky lands at the
+    # ceiling. One-sided: dark skies keep the plain 0.987 x median bp, so the
+    # passing finals (sky 9-13) are untouched. (The M81 gray wash itself was pcc's
+    # ICC gamma on savejpg -- fixed at the source with icc_remove -- this solve is
+    # the structural guard that NO parameter combination ships a bright gray sky.)
+    # Starfield needs no ceiling -- its mtf solve already targets the sky directly.
+    # EFFECTIVE ARMING POINT IS `sky_ceiling + solver sky_tol` (18 + 2 = 20), not
+    # 18: core/solve.py enters the black-point search only above ceiling+tol,
+    # because that same tolerance is the search's own stop condition -- a solve
+    # armed at 19 would exit on its first probe having spent ~9 renders changing
+    # nothing. A render landing at sky 18-20 has therefore NOT missed the guard
+    # (2026-08-14 audit of NGC5128 at 19.8; docs/assessments/
+    # 2026-08-14-two-point-solve-threshold-audit.md).
+    # sky_ceiling 13 -> 18 (2026-07): a guard belongs OUTSIDE the healthy range.
+    # Passing finals land sky 9-15 naturally; a ceiling of 13 sat INSIDE that range
+    # and would fight legitimate renders once the lo=0.02 solver headroom lets the
+    # faint end come up ("modestly dark" per the M81 review: far cleaner than the
+    # device JPG's ~40 gray, headroom for the faint envelope to stay connected).
+    target:
+      nebula:    { metric: body_p90,   level: 72, sky_ceiling: 18 }
+      galaxy:    { metric: body_p90,   level: 72, sky_ceiling: 18 }
+      starfield: { metric: sky_median, level: 10 }
+    solve_stretch: true           # false → use fixed mtf_mid above
+
+    # mtf solver search bounds/precision (promoted from in-code constants, 2026-07).
+    # Provenance: hi/tol from the session-5 adaptive-lift work (M8/M17/M5);
+    # lo re-locked 0.04 -> 0.02 (2026-07, harness-validated on M81+M100): the old
+    # floor was an arbitrary clamp that overrode the solved contract on faint Pro
+    # data (both galaxies pinned, body p90 ~59-62 vs target 72, zero signal).
+    # The target still governs; lo only bounds the search, and a solve that
+    # CONVERGES ONTO a bound without reaching its target is reported as PINNED
+    # (notes + QA warning) — a bound that binds silently is a gate that silently
+    # skips. Garbage-input protection is the pinned warning + the QA gates, not
+    # an accidental floor.
+    solver: { lo: 0.02, hi: 0.25, tol: 0.5, max_iter: 10 }
+
+  # Galaxy GHS treatment: reveals dust lane and inner structure after the base
+  # stretch by expanding contrast around the body brightness (SP). LP keeps
+  # background noise flat; HP protects the core from clipping.
+  # SP re-locked 0.25 -> 0.15 (2026-07 M81 faint-disk bracket): the outer disk
+  # lives BELOW the old SP, so SP=0.25 compressed it toward the sky (the render
+  # lost the disk the S30's own JPG showed). At 0.15 the M81 disk extent grew
+  # +27% (envelope 8.1% -> 10.3%) with pegged chroma nearly HALVED (6.6% -> 3.8%)
+  # and the sky held dark by the two-point solve (which now guards the background
+  # that the old higher SP was protecting). Bracketed with a per-variant solve;
+  # re-validate on Cen A (dust-lane case) when that data is next available.
+  galaxy_treatment:
+    ght_d: 1.5          # stretch intensity
+    ght_b: 5.0          # concentration around SP
+    ght_sp: 0.15        # symmetry point: on the FAINT DISK, below the bright body
+    ght_lp: 0.06        # shadow floor: below this is not stretched
+    ght_hp: 0.65        # highlight ceiling: above this is not stretched
+    unsharp_sigma: 0.0  # sharpening off — 4″/px is undersampled
+    unsharp_amount: 0.0
+    closeup: true       # also emit a {target}_closeup for small galaxies
+
+  # Nebula GHS treatment: OFF by default (2026-07 overcook regression). Unlike the
+  # galaxy GHS (validated by a controlled on/off compare) and the cluster halo GHS
+  # (locked from a bracket), this one was never shown to beat the base solved
+  # stretch — and measurement says it can't: with the solver holding body p90 on
+  # target, the GHS's net effect is only to push everything below SP down, crushing
+  # the sky (near-black 4.2% pre-contract-fix, 67% post) while satu pegs the body
+  # chroma (32–36% at the S≥0.9 rail vs 0% for the base stretch). The base
+  # asinh+solved-mtf render already measures excellent on every axis (sky 9.3,
+  # near-black 0.01%, 1475 stars, body p90 on target). Re-enable only with a
+  # bracket that passes the near_black/pegged_chroma gates.
+  nebula_treatment:
+    enabled: false
+    ght_d: 1.5
+    ght_b: 5.0
+    ght_sp: 0.25        # above sky so the lift hits the nebula, not the background
+    ght_lp: 0.05
+    ght_hp: 0.70
+    unsharp_sigma: 0.0
+    unsharp_amount: 0.0
+
+  # Cluster halo treatment: globulars classify as `starfield`, so the base
+  # stretch targets only a dark sky and misses the low-surface-brightness halo.
+  # Concentration is MEASURED (not named) — a packed core stands many sigma
+  # above the field after block-mean downsampling. SP=0.20 sits on the halo
+  # (lower than nebula's 0.25 because the halo is closer to the sky in brightness).
+  cluster:
+    concentration_min: 50.0   # measured C >= this → concentrated cluster
+    block: 32                 # downsample factor for the concentration measure
+
+  cluster_treatment:
+    enabled: true
+    ght_d: 1.5
+    ght_b: 5.0
+    ght_sp: 0.20        # on the halo (closer to sky than a nebula envelope)
+    ght_lp: 0.05
+    ght_hp: 0.70
+    unsharp_sigma: 0.0
+    unsharp_amount: 0.0
+
+  # Sharpening ceiling: the Seestar samples at ~4″/px (read from the WCS CD
+  # matrix). At this plate scale the data is undersampled and sharpening only
+  # amplifies noise. The cap is applied automatically from the measured scale.
+  sharpening:
+    undersampled_arcsec: 2.5
+    undersampled_unsharp_cap: 0.0
+
+  # Print profile: lift the output black point so shadows survive on reflective
+  # media (a screen-inky background prints as crushed shadow on paper).
+  print:
+    black_lift: 0.05
+
+  # Saturation defaults per category. Overrideable via preferences.yaml color:.
+  # starfield is 0.55, not the intuitive 0.85: old globular clusters (M5, M13,
+  # NGC5139) are dominated by red giants (~4000K), which have a physical R/G of
+  # ~1.3 from Planck's law. At 0.85, satu amplifies this to R/G ~1.37 across the
+  # cluster body — confirmed in M5 QA body_rgb [40.8, 29.8, 30.2] — making the
+  # cluster look pink rather than warm orange. 0.55 keeps the natural warm colour
+  # without overcooking it. (Note: PCC is already off for IRCUT starfields in
+  # policy.py, so nothing else compensates for over-saturation here.)
+  saturation: { nebula: 0.60, starfield: 0.55, galaxy: 0.60 }
+
+  # PCC: off for LP (dual-band) — PCC neutralises Hα to broadband pink.
+  # On for IRCUT broadband where accurate star color matters.
+  pcc_by_filter: { LP: false, IRCUT: true }
+
+  # PCC evidence acceptance bounds (Diagnosis 4, 2026-08). A completed pcc run is
+  # judged against the tool's OWN reported evidence: an explicitly imprecise or
+  # few-stars solution, too few calibration stars, or implausible white-balance
+  # factors falls back to a fresh native-color pass (recorded, never silent).
+  # Broad by design — validated against a real healthy Siril 1.4.4 solution
+  # (S50 broadband field, 330 stars, factors 0.471/0.713/1.000, captured
+  # 2026-08-14); never tuned to make a specific target look better.
+  pcc: { min_stars: 25, coeff_min: 0.2, coeff_max: 5.0, max_ratio: 4.0 }
+
+  # Star treatment for extended targets (nebula/galaxy) under showcase/print:
+  # screen-blend the star layer back at strength k (0=starless, 1=full stars).
+  # Overrideable via preferences.yaml stars:.
+  star_reduce_k: 0.45
+
+  # Conservative star policy (Phase 3A of the automatic-quality-recovery plan).
+  # During stabilization the RECOMMENDED hero (_final) for an extended target is
+  # the untamed stars-on look; the star-reduced and starless renders are emitted
+  # only as "More versions" variants. Fixed star reduction as the hero emptied
+  # both the NGC7000 and M8 fields (assessments 2026-07-15). Set false to restore
+  # the legacy behavior where _final is the star-reduced render.
+  conservative_star_hero: true
+
+  # Chroma recovery (Phase 3B). When the shipped hero fails ONLY the pegged_chroma
+  # ("neon") gate on a converged solve, lower saturation through this bounded
+  # bracket and re-render the stretch chain, reusing the upstream BGE/denoise/color
+  # artifacts. Values are relative multipliers on the DECIDED per-image saturation
+  # (category-agnostic), tried highest-first; the strongest candidate that clears
+  # the category pegged_chroma ceiling wins. If none pass,
+  # ship the best-effort image with an honest PROCESSING_FAILED status. len(bracket)
+  # is the hard attempt cap. Target regression: a noisy M8 capture (26% chroma-rail).
+  # This is a bounded search, not an engine law — tune freely without a re-lock.
+  recovery:
+    saturation_bracket: [0.85, 0.70]
+    # 4C aesthetic target: if a clean-PASS render measures body_saturation_median
+    # above this per-category ceiling, back off saturation through the SAME bracket
+    # above and ship the strongest candidate under the ceiling (still PASS -- an
+    # aesthetic target, never PROCESSING_FAILED). null = disabled (TBD-by-bracket:
+    # M8 LP nebula + a globular + a galaxy).
+    body_saturation_ceiling: { nebula: null, starfield: null, galaxy: null }
+
+  # Classification thresholds (CLAUDE.md §6a; promoted from in-code constants,
+  # 2026-07 — the old engine.extended_signal_threshold key was NEVER actually
+  # threaded into classify(), so the in-code 0.03 was what ran; fixed with this
+  # block). Provenance: E 0.03 from the reference-set classification work;
+  # noisy = frames < 45 OR bgnoise > 0.0025 (session-1 SNR classes).
+  classify:
+    extended_signal_threshold: 0.03   # E >= this → extended signal present
+    noisy_frames_below: 45
+    noisy_bgnoise_above: 0.0025
+
+  # E-gate disabled: star concentration in a dense globular scores higher than
+  # a faint galaxy, making the gate unreliable. Use catalog_prior instead.
+  e_gate: false
+
+  # WCS catalog prior: cone-search SIMBAD to distinguish IRCUT galaxy vs
+  # globular (the E-gate cannot). On by default (matches GUI default); degrades
+  # gracefully offline. CLI: override with --no-prior.
+  catalog_prior: true
+
+  combine_sessions: false  # true = register+integrate all sessions (opt-in)
+
+  # Auto feature-crop: off by default. "Subject looks small" is almost always
+  # a brightness problem, not a framing one — fix the stretch, not the frame.
+  framing:
+    enabled: false
+    fill_fraction: 0.80
+    k_extent: 2.2
+    subject_threshold_sigma: 4.0
+    trigger_max_frac: 0.62
+
+  # Satellite/aircraft trail removal. Detect-on-master + inpaint (no subs).
+  # Runs before BGE so the streak doesn't corrupt the background model.
+  trail_removal:
+    enabled: true
+    min_prominence: 2.5
+    min_length_frac: 0.5
+    star_clip: 3.0
+    detect_downsample: 2
+    bg_radius: 24
+    max_halfwidth: 6
+    extra_width: 1
+
+# WCS catalog prior settings (used only when engine.catalog_prior is true).
+prior:
+  tap_url: "https://simbad.u-strasbg.fr/simbad/sim-tap/sync"
+  radius_deg: 0.2
+  timeout_s: 15
+  cache_dir: "~/.cache/seestar/prior"
+
+# Purpose profiles — overlays on engine defaults. Default = showcase.
+# The overlay definitions (saturation scale, brightness target scale, GHS gating,
+# star forks, …) live in seestar/core/policy.py — the single source of truth.
+profiles:
+  default: "showcase"
+  available: ["showcase", "natural", "documentation", "print"]
+
+defaults:
+  artist: ""                  # EXIF:Artist on exports. Set to your name, or leave empty.
+  telescope: "ZWO Seestar S30"  # FALLBACK only — the FITS header CREATOR (S30 / S30 Pro) wins when present
+
+# QA gates: hard-fail thresholds for catastrophic regressions (not tuning targets).
+# Set well below passing finals so a good render always passes; a broken one fires.
+qa:
+  # object_mask parameters (promoted from in-code constants, 2026-07). blur (px)
+  # suppresses point stars before thresholding; k = sigma above the robust
+  # background that counts as subject. Provenance: the M8 masked-metrics work
+  # (the "0.1% near-black = gray wash" false-alarm fix). Shared by QA AND the
+  # stretch solver's probe (pipeline._probe_metric) — one mask, or the solve
+  # and the gates diverge.
+  mask: { k: 4.0, blur: 6.0 }
+  gates:
+    enabled: true
+    # Thresholds are LOCKED on the original S30 sensor (1080x1920 @ 3.99"/px).
+    # Other Seestar models are handled by SCALING at gate time from the pixel scale
+    # embedded in the render's EXIF (qa.gate_scale_factors): fwhm_ceiling by the
+    # pixel-scale ratio, faint_structure_floor by the FOV-area ratio. The S30 Pro
+    # (2160x3840 @ ~3.74"/px, 160mm) has near-equal sampling but ~3.5x the sky area.
+    # star_preservation is SOURCE-RELATIVE (Diagnosis 2, 2026-08): the output is
+    # judged against the stars measured in THIS capture's linear master (the run's
+    # INPUT_STARS evidence), never an absolute per-camera count. PROVISIONAL
+    # calibration: healthy observed retention 0.703-0.776 across S30/S30 Pro/S50;
+    # min_retention sits deliberately far below it, and catastrophe_floor is capped
+    # at the measured input count at gate time. See
+    # docs/assessments/2026-08-13-cross-camera-validation-coverage.md.
+    reference: { pixscale_arcsec: 3.99, dims: [1080, 1920] }
+    star_preservation:     { min_retention: 0.5, catastrophe_floor: 20 }
+    fwhm_ceiling:          { nebula: 3.3,  starfield: 3.6,  galaxy: 3.5 }
+    core_sat_ceiling:      { nebula: 0.01, starfield: 0.01, galaxy: 0.01 }
+    # faint_structure is SOURCE-RELATIVE (Diagnosis 3, 2026-08): the published
+    # starless render is judged by how much of the run's OWN measured subject
+    # support stays visible -- never an inverse-FOV frame fraction (a larger
+    # field does not owe a larger fraction of nebulosity). PROVISIONAL
+    # calibration (no real retained-fraction corpus yet): retention_min is a
+    # deliberately low cross-category bound; catastrophe_floor catches a
+    # nearly-empty starless render by its global extended fraction.
+    faint_structure:       { retention_min: 0.3, catastrophe_floor: 0.002 }
+    # Soft gate: warn when per-channel colour imbalance in the masked body exceeds
+    # this ratio. Catches satu overcooking natural red-giant colours (M5 case:
+    # R/G 1.37, looked pink). null means no check for that category — LP nebulae
+    # are excluded because Hα naturally dominates red; IRCUT galaxy keeps the check
+    # since PCC should have calibrated the colour there.
+    body_rgb_max_ratio:    { nebula: null, starfield: 1.25, galaxy: 1.25 }
+
+    # Overcook gates (2026-07, calibrated on the M8 GHS regression vs all passing
+    # finals). Catastrophe ceilings, not taste — every good render clears by ≥2x.
+    #
+    # near_black: fraction of sky pixels (outside the object mask) at/near pure
+    # black. Good finals measure 0.000; the crushed M8 measured 0.042–0.046.
+    near_black_ceiling:    { nebula: 0.02, starfield: 0.02, galaxy: 0.02 }
+    # sky_median: the gray-wash cousin of near_black — the sky rendered too BRIGHT
+    # (background_median_outside_mask). Good finals measure 9–13; the washed M81
+    # (+PCC, pre two-point solve) measured 40. SKIPPED for the documentation
+    # profile, whose full-DR promise legitimately brightens the sky.
+    sky_median_ceiling:    { nebula: 25,   starfield: 25,   galaxy: 25 }
+    # pegged_chroma: fraction of body pixels with HSV saturation on the rail
+    # (S ≥ 0.90) — "neon color". Channel-agnostic, so honest Hα red-dominance
+    # passes (healthy M8 pre-GHS: 0.00) while satu-to-the-rail fails (overcooked
+    # M8: 0.47). Good finals: starfield ≤0.035, galaxy ≤0.078. Nebula ceiling is
+    # the most generous — strong emission color is the point of an LP render.
+    pegged_chroma_ceiling: { nebula: 0.20, starfield: 0.10, galaxy: 0.15 }
+    # 4C WARN instruments (measure-only; TBD-by-bracket -- null = skip until locked).
+    # core_saturation: bright core should burn pale (low S), not stay saturated.
+    # star_saturation: faint field stars picking up the body's colour tint.
+    core_saturation_ceiling: { nebula: null, starfield: null, galaxy: null }
+    star_saturation_ceiling: { nebula: null, starfield: null, galaxy: null }
+    # Soft warn: showcase _final (star-reduced) keeping under this fraction of the
+    # stars-on count means the field was emptied, not tamed.
+    star_retention_warn: 0.35
+
+    # SEED value only -- copied from validation.tolerances.level_abs (the existing
+    # +/-2 level tolerance used for body_p90/sky_median drift in `seestar validate`).
+    # This is an "Open decision to resolve with brackets, not opinion" per the
+    # project plan (2026-07-15-automatic-final-image-quality-recovery.md §9) --
+    # do NOT treat 2.0 as a locked engine law until it has been bracket-validated
+    # against the full reference set (Phase 6).
+    hero_contract_tolerance: { nebula: 2.0, galaxy: 2.0, starfield: 2.0 }
+
+# Benchmark references (optional, local dev aid — not shipped).
+# Point these at your own files to enable reference-anchored QA scoring.
+# The engine and absolute QA gates work without references.
+#   references:
+#     M8:
+#       content:   "/path/to/your/M8_S30.jpeg"
+#       aesthetic: "/path/to/your/M8_target.png"
+references: {}
+
+# Back-validation harness (`seestar validate`, CLAUDE.md §13 generalization law):
+# re-render each target from its raw stack into scratch, QA it, and diff against
+# the committed baseline in validation/baselines/. An engine change is DONE only
+# when every available reference is identical-or-better. Raw paths are
+# MACHINE-SPECIFIC; a missing path is skipped with a warning (the historic
+# 5-target S30 library lives on the Mac). A raw entry may be a target FOLDER or a
+# single Stacked_*.fit FILE (staged into scratch; its home is never written to).
+validation:
+  scratch_dir: "validation/scratch"
+  baselines_dir: "validation/baselines"
+  # macOS override: a separate dir so a Mac run never clobbers the committed Windows
+  # baselines (Mac<->Windows renders aren't bit-identical). gitignored. See
+  # docs/history/superpowers/specs/2026-07-21-os-aware-validation-paths-design.md.
+  baselines_dir_darwin: "validation/baselines-mac"
+  tolerances:              # absorb GraXpert/StarNet nondeterminism; widen HERE, not in code
+    star_count_rel: 0.05
+    fwhm_abs: 0.15
+    level_abs: 2
+    fraction_rel: 0.20
+    fraction_abs_floor: 0.005
+  replay:
+    # LOCKED from the 2026-07-13 M81 double-render measurement (spec §2): the full
+    # chain (GraXpert GPU denoise included) is BIT-IDENTICAL on this hardware --
+    # measured max_abs=0, rmse=0.0, params identical. If a future machine shows AI
+    # jitter, re-measure and widen HERE (max-abs + RMSE family), never in code.
+    max_abs_ceiling: 0
+    rmse_ceiling: 0.0
+  # Reference-capture raw paths are MACHINE-SPECIFIC and PERSONAL — they live in a
+  # git-ignored config.local.yaml, deep-merged over this file by io.load_config().
+  # Copy config.example.yaml -> config.local.yaml and fill in your own paths to use
+  # `seestar validate`. Empty here so the public repo carries no personal paths.
+  targets: {}
+  targets_darwin: {}

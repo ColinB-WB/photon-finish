@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "source": "TEST FIXTURE -- mirrors seestar/data/known_targets.json's prototype 5 records (same identity/coordinates/extent). Not product data; do not ship.",
+    "license": "CC-BY-SA-4.0 (OpenNGC) -- see THIRD_PARTY_NOTICES.md if the real catalog ships in v1.0",
+    "generated": "hand-authored for tests/test_known_targets_ablation.py (Task 9); schema matches tools/build_known_targets.py output",
+    "content_hash": "n/a (test fixture)",
+    "curation_schema_version": 1,
+    "note": "The catalog-PRESENT control for the controlled-ablation harness (spec sec7). Search footprints/morphology traits are curated and INERT in v1 (sec5.4)."
+  },
+  "records": [
+    {
+      "entry_id": "ngc6523",
+      "canonical_id": "M8",
+      "common_name": "Lagoon Nebula",
+      "aliases": ["Lagoon Nebula"],
+      "equivalent_ids": ["NGC6523"],
+      "classification": {"family": "nebula", "source": "OpenNGC v20260501"},
+      "ra_deg": 270.922,
+      "dec_deg": -24.3802,
+      "extent_major_arcmin": 45.0,
+      "extent_minor_arcmin": 30.0,
+      "search_footprints": [
+        {"shape": "ellipse", "major_arcmin": 90.0, "minor_arcmin": 40.0, "pa_deg": 0.0}
+      ],
+      "morphology_traits": ["emission_nebula", "star_forming_region"],
+      "associated": [
+        {"canonical_id": "NGC6530", "relationship": "embedded_cluster"}
+      ],
+      "lookup_role": "primary",
+      "provenance": {
+        "identity": "OpenNGC v20260501",
+        "classification": "OpenNGC v20260501",
+        "coordinates": "OpenNGC v20260501",
+        "footprint": "curated (illustrative placeholder, inert in v1)",
+        "morphology": "curated"
+      }
+    },
+    {
+      "entry_id": "ngc6530",
+      "canonical_id": "NGC6530",
+      "common_name": null,
+      "aliases": [],
+      "equivalent_ids": [],
+      "classification": {"family": "starfield", "source": "curated"},
+      "ra_deg": 271.1293,
+      "dec_deg": -24.3581,
+      "extent_major_arcmin": 6.0,
+      "extent_minor_arcmin": null,
+      "search_footprints": [
+        {"shape": "circle", "radius_arcmin": 7.5}
+      ],
+      "morphology_traits": ["open_cluster"],
+      "associated": [
+        {"canonical_id": "M8", "relationship": "embedded_in"}
+      ],
+      "lookup_role": "associated_only",
+      "provenance": {
+        "identity": "OpenNGC v20260501",
+        "classification": "curated",
+        "coordinates": "OpenNGC v20260501",
+        "footprint": "curated (illustrative placeholder, inert in v1)",
+        "morphology": "curated"
+      }
+    },
+    {
+      "entry_id": "ngc7000",
+      "canonical_id": "NGC7000",
+      "common_name": "North America Nebula",
+      "aliases": ["North America Nebula"],
+      "equivalent_ids": [],
+      "classification": {"family": "nebula", "source": "OpenNGC v20260501"},
+      "ra_deg": 314.8214,
+      "dec_deg": 44.5288,
+      "extent_major_arcmin": 120.0,
+      "extent_minor_arcmin": 30.0,
+      "search_footprints": [
+        {"shape": "ellipse", "major_arcmin": 120.0, "minor_arcmin": 100.0, "pa_deg": 0.0}
+      ],
+      "morphology_traits": ["emission_nebula", "frame_filling"],
+      "associated": [],
+      "lookup_role": "primary",
+      "provenance": {
+        "identity": "OpenNGC v20260501",
+        "classification": "OpenNGC v20260501",
+        "coordinates": "OpenNGC v20260501",
+        "footprint": "curated (illustrative placeholder, inert in v1)",
+        "morphology": "curated"
+      }
+    },
+    {
+      "entry_id": "ngc5128",
+      "canonical_id": "NGC5128",
+      "common_name": "Centaurus A",
+      "aliases": ["Centaurus A", "Cen A"],
+      "equivalent_ids": [],
+      "classification": {"family": "galaxy", "source": "OpenNGC v20260501"},
+      "ra_deg": 201.3651,
+      "dec_deg": -43.0191,
+      "extent_major_arcmin": 25.88,
+      "extent_minor_arcmin": 19.77,
+      "search_footprints": [
+        {"shape": "ellipse", "major_arcmin": 25.7, "minor_arcmin": 20.0, "pa_deg": 35.0}
+      ],
+      "morphology_traits": ["peculiar_galaxy", "dust_lane"],
+      "associated": [],
+      "lookup_role": "primary",
+      "provenance": {
+        "identity": "OpenNGC v20260501 + curated aliases",
+        "classification": "OpenNGC v20260501",
+        "coordinates": "OpenNGC v20260501",
+        "footprint": "curated (illustrative placeholder, inert in v1)",
+        "morphology": "curated"
+      }
+    },
+    {
+      "entry_id": "ngc5139",
+      "canonical_id": "NGC5139",
+      "common_name": "Omega Centauri",
+      "aliases": ["Omega Centauri"],
+      "equivalent_ids": [],
+      "classification": {"family": "starfield", "source": "OpenNGC v20260501"},
+      "ra_deg": 201.6912,
+      "dec_deg": -47.4769,
+      "extent_major_arcmin": 27.0,
+      "extent_minor_arcmin": null,
+      "search_footprints": [
+        {"shape": "circle", "radius_arcmin": 18.15}
+      ],
+      "morphology_traits": ["globular_cluster", "dense_core"],
+      "associated": [],
+      "lookup_role": "primary",
+      "provenance": {
+        "identity": "OpenNGC v20260501",
+        "classification": "OpenNGC v20260501",
+        "coordinates": "OpenNGC v20260501",
+        "footprint": "curated (illustrative placeholder, inert in v1)",
+        "morphology": "curated"
+      }
+    }
+  ]
+}

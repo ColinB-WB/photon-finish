@@ -1,0 +1,123 @@
+{
+  "recipe_format": 1,
+  "engine_version": "3.0.0",
+  "generated": "2026-07-13T12:07:39",
+  "target": "M81",
+  "source_fits": "Stacked_60_M 81_10.0s_IRCUT_20260703-220445.fit",
+  "context": {
+    "category": "galaxy",
+    "snr_class": "clean",
+    "filter": "IRCUT",
+    "profile": "showcase"
+  },
+  "adjustments": [
+    {
+      "adjustment": "trail_removal",
+      "value": true,
+      "your_value": null,
+      "tool": "this app (built-in trail detection and repair)",
+      "note": "Whether to detect and remove a satellite/aircraft trail (a long thin straight bright line) before processing.",
+      "reason": "detection ran: no trail found",
+      "symptoms_if_wrong": "Wrongly on: a real linear feature (e.g. a diffraction spike) gets painted over. Wrongly off: a bright streak crosses the finished image."
+    },
+    {
+      "adjustment": "crop_border_frac",
+      "value": 0.015,
+      "your_value": null,
+      "tool": "Siril (crop)",
+      "note": "Fraction of the frame trimmed from each edge to remove the ragged stacking border.",
+      "reason": "galaxy default (clean SNR), profile=showcase",
+      "symptoms_if_wrong": "Too low: dark ragged edges survive into the finished image and skew the background model. Too high: you lose usable sky area."
+    },
+    {
+      "adjustment": "bge_smoothing",
+      "value": 0.5,
+      "your_value": null,
+      "tool": "GraXpert (background extraction)",
+      "note": "How smooth the modeled light-pollution gradient is before it is subtracted.",
+      "reason": "galaxy default (clean SNR), profile=showcase",
+      "symptoms_if_wrong": "Too low: the model chases real nebulosity and eats faint structure. Too high: strong local gradients survive subtraction."
+    },
+    {
+      "adjustment": "denoise_strength",
+      "value": 0.65,
+      "your_value": null,
+      "tool": "GraXpert (denoising)",
+      "note": "How much AI noise smoothing is applied (0.0–1.0). Counter-intuitively, more denoise reveals MORE faint stars (they rise above the detection threshold). Values around 0.6 are typical; faint galaxies use about 0.65, while dense stellar cores (clusters) can begin to over-smooth above roughly 0.6–0.7.",
+      "reason": "galaxy default (clean SNR), profile=showcase",
+      "symptoms_if_wrong": "Too high: creamy/plastic look, dense star cores smear together. Too low: grainy background, faint stars missing."
+    },
+    {
+      "adjustment": "color_calibration",
+      "value": true,
+      "your_value": null,
+      "tool": "Siril (photometric color calibration)",
+      "note": "Whether photometric color calibration (PCC) runs. The app decides from the filter and measured category: dual-band LP filters and star clusters keep native color; broadband galaxies get calibrated.",
+      "reason": "galaxy default (clean SNR), profile=showcase",
+      "symptoms_if_wrong": "Wrongly on (dual-band nebula): deep red emission washes to pink. Wrongly off (broadband galaxy): the body keeps an uncalibrated color cast."
+    },
+    {
+      "adjustment": "saturation",
+      "value": 0.6,
+      "your_value": null,
+      "tool": "Siril (color saturation)",
+      "note": "Color saturation applied after the stretch (threshold 0, so faint signal is saturated too).",
+      "reason": "galaxy default (clean SNR), profile=showcase",
+      "symptoms_if_wrong": "Too high: neon color, hues pinned to the rail (the QA pegged-chroma gate fails). Too low: gray, lifeless image."
+    },
+    {
+      "adjustment": "contrast_shape",
+      "value": 55,
+      "your_value": null,
+      "tool": "Siril (asinh stretch)",
+      "note": "The asinh stretch depth — the contrast SHAPE of the lift (the brightness LEVEL is solved separately per image).",
+      "reason": "galaxy default (clean SNR), profile=showcase",
+      "symptoms_if_wrong": "Too high: the faint field lifts into visible noise and bright cores flatten. Too low: the subject looks small, dim and underwhelming."
+    },
+    {
+      "adjustment": "brightness_target",
+      "value": 72.0,
+      "your_value": null,
+      "tool": "this app (per-image solver) — applied via Siril's midtone lift",
+      "note": "The output level the stretch solver aims for (0–255 scale): extended targets solve the subject's brightness (body p90), star fields solve the sky median. This is THE brightness knob.",
+      "reason": "galaxy default (clean SNR), profile=showcase",
+      "symptoms_if_wrong": "Too high: gray washed-out sky, blown cores. Too low: dark, small-looking subject that does not fill the frame."
+    },
+    {
+      "adjustment": "structure_boost",
+      "value": true,
+      "your_value": null,
+      "tool": "Siril (generalized hyperbolic stretch)",
+      "note": "Whether the measured structure treatment (GHS) runs on top of the base stretch — nebula envelope, galaxy dust lane, or cluster halo. Pinning this true can only UN-DO an 'off' decision the profile or preferences made — it cannot invent a structure treatment for an image the engine decided has none.",
+      "reason": "galaxy default (clean SNR), profile=showcase",
+      "symptoms_if_wrong": "Wrongly on: overcooked look on weak data. Wrongly off: the faint envelope/halo/dust lane the data supports stays invisible."
+    },
+    {
+      "adjustment": "star_prominence",
+      "value": 0.45,
+      "your_value": null,
+      "tool": "StarNet2 (star separation) + Siril (blend)",
+      "note": "How strongly stars are blended back into the star-reduced hero image (screen blend strength k).",
+      "reason": "galaxy default (clean SNR), profile=showcase",
+      "symptoms_if_wrong": "Too high: the star field competes with the subject. Too low: an eerie, nearly starless sky that reads as fake."
+    },
+    {
+      "adjustment": "blackpoint",
+      "value": 0.01828,
+      "your_value": null,
+      "tool": "this app (measured from the image) — applied via Siril's asinh stretch",
+      "note": "The stretch black point, set just BELOW the measured sky level so the background is dark but the faint star field survives. The app re-computes this from the image each run; leave your_value null unless you want to force it.",
+      "reason": "measured: factor 0.987 x linear sky median 0.018409; raised by the two-point sky solve to hold the sky at 17.2",
+      "symptoms_if_wrong": "Too high: faint stars vanish and the frame looks empty (a black point above the sky median once cut a star field from ~900 stars to 26). Too low: gray, washed-out background."
+    },
+    {
+      "adjustment": "mtf_mid",
+      "value": 0.0344,
+      "your_value": null,
+      "tool": "this app (per-image solver) — applied via Siril's midtone lift",
+      "note": "The midtone lift applied after asinh. The app solves this per image so the render hits brightness_target. The app re-computes this from the image each run; leave your_value null unless you want to force it.",
+      "reason": "solved: body_p90 hit 71.9 (target 72.0)",
+      "symptoms_if_wrong": "Too low: washed-out gray sky. Too high: dim, flat subject. If brightness is what you want to change, pin brightness_target instead — it survives re-solves."
+    }
+  ]
+}

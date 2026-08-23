@@ -1,0 +1,37 @@
+# Paths EXCLUDED from the public, no-history copy of this repo.
+# Maintainer-only trees (research, dev notes, agent config, private baselines)
+# and build artifacts. One glob per line; '#' starts a comment.
+# The owner uses this list when copying the repo to the new public repo.
+dev-notes/
+.claude/
+validation/
+experiments/
+build/
+dist/
+*.egg-info/
+__pycache__/
+# Local tool caches, OS/editor junk, and PyInstaller's generated spec files. The
+# export copies the WORKING TREE and never reads .gitignore, so a git-ignored
+# artifact ships unless it is also listed here -- these six reached a v1.1.0
+# dry-run export (2.5 MB of .mypy_cache among them) before being caught.
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+*.spec
+.venv/
+.venv-build/
+config.local.yaml
+output/
+tmp/
+.git/
+.superpowers/
+.personal-tokens
+docs/RELEASE_READINESS.md
+docs/BETA_PLAN.md
+docs/CLEAN_BUILD_TEST.md
+docs/VALIDATION.md
+docs/assessments/
+docs/superpowers/
+docs/history/
+docs/future/input-scenarios.md

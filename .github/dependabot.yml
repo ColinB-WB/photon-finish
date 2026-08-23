@@ -1,0 +1,48 @@
+# Dependency update PRs (M5, docs/assessments/2026-07-30-code-quality-assessment.md).
+#
+# Scope is deliberately narrow. Two things are updated:
+#
+#   1. GitHub Actions, which this repo pins BY COMMIT SHA. A SHA pin is the right
+#      supply-chain posture and the reason it needs automation: nobody re-reads a
+#      40-character hash to notice it has gone stale.
+#   2. The project's own runtime/dev dependency ranges in pyproject.toml.
+#
+# Two things are deliberately NOT updated, because an automated bump there would
+# break a documented guarantee rather than maintain one:
+#
+#   * packaging/requirements-build-macos.lock — the hash-pinned frozen-app build
+#     environment. It is regenerated on purpose, with a pinned pip-tools, per
+#     docs/development/releasing.md; a drive-by bump would silently change what
+#     ships inside a signed, notarized app.
+#   * experiments/d2a/requirements-d2a.txt — pinned so the D2a results stay
+#     reproducible. Its whole value is that the numbers can be re-derived; moving
+#     the versions underneath them destroys that.
+#
+# Both are directories dependabot never visits, since `directory:` below names
+# only "/" — this comment records WHY, so a future "let's cover everything"
+# instinct meets the reason first.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "build"
+    ignore:
+      # ruff is pinned to the .pre-commit-config.yaml rev on purpose: the two must
+      # move together or a contributor's `ruff format` writes changes the enforced
+      # pre-commit hook then rejects (pyproject.toml's own note, defer D-03).
+      # Upgrading it is a two-file human decision, not a bot's.
+      - dependency-name: ruff
+      # Same shape: vulture's findings are baselined against packaging/vulture_allowlist.py.
+      - dependency-name: vulture

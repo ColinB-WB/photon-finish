@@ -1,0 +1,159 @@
+name: tests
+
+on:
+  # Skip the full 3-OS matrix for docs-only pushes (they can't affect tests).
+  # pull_request is deliberately left UNFILTERED: a required check skipped by a path
+  # filter can sit "pending" and block a PR. If this workflow is never a required
+  # check, paths-ignore could be added here too.
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Supported platforms per the contract (AGENTS.md §5: "Cross-platform (macOS + Windows)").
+        os: [macos-latest, windows-latest]
+        python-version: ["3.12"]
+        include:
+          # Linux as a non-blocking portability canary — cheap early warning for
+          # platform-specific bugs (e.g. the Windows-only fake-tool launcher) without
+          # committing to Linux as a supported platform.
+          - os: ubuntu-latest
+            python-version: "3.12"
+            experimental: true
+          # LANGUAGE-VERSION coverage, not platform coverage (M5): pyproject declares
+          # requires-python >=3.10, and until now only 3.12 was ever tested — the
+          # floor was advertised, never verified. These run on Linux because the
+          # question is "does the code work on this Python?", not "does it work on
+          # this OS", and they are BLOCKING: an unverifiable claim in the packaging
+          # metadata is the thing being fixed, so a red one must be a real failure,
+          # not a shrug. 3.11 was additionally verified locally on macOS before this
+          # matrix entry was added.
+          - os: ubuntu-latest
+            python-version: "3.10"
+          - os: ubuntu-latest
+            python-version: "3.11"
+
+    continue-on-error: ${{ matrix.experimental || false }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Node LTS
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: lts/*
+
+      - name: Install package + test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,gui]"
+
+      - name: Run front-end reducer tests
+        run: node --test 'tests/frontend/**/*.test.mjs'
+
+      - name: Run tests
+        run: pytest -q
+
+  lint:
+    name: lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      # The version is pinned in BOTH pyproject.toml's dev extra and
+      # .pre-commit-config.yaml, and they must move together (a formatter run by a
+      # different ruff writes changes the enforced hook then rejects). Installing
+      # the dev extra means this gate can never drift from what contributors run.
+      - name: Install ruff (pinned via the dev extra)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: ruff check
+        run: ruff check --select E,F,I,B,UP --ignore E501 .
+
+      - name: ruff format --check
+        run: ruff format --check .
+
+  # Scoped to seestar/core/ and strict — see the [tool.mypy] block in
+  # pyproject.toml for why the shell is deliberately excluded. BLOCKING: the core
+  # is clean today, so a red here means a genuine new type defect, never a backlog.
+  typecheck:
+    name: mypy (core, strict)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install package + dev extra (mypy is pinned there)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: mypy
+        run: mypy
+
+  # ADVISORY, deliberately non-blocking. A published advisory against a transitive
+  # dependency is not a defect in this repo, and making every unrelated push go red
+  # until an upstream fix lands is the "gate that fails a healthy capture" failure
+  # mode this project keeps arguing against (AGENTS.md SCOPE BAR). The job still
+  # shows its own ❌ on the run, and dependabot opens the PR that fixes it. Flip
+  # `continue-on-error` to false the day this ships to people who are not the author.
+  audit:
+    name: pip-audit (advisory)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install package + pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[gui,desktop]"
+          pip install pip-audit
+
+      # Audits what is actually installed (the resolved tree), not a manifest —
+      # transitive dependencies are where advisories usually land.
+      #
+      # --skip-editable excludes THIS project: it is installed editable and is not
+      # on PyPI, so it can never be audited, and without the flag pip-audit exits
+      # on our own package having reported nothing about the dependencies.
+      #
+      # --strict is deliberately NOT set, and the two are mutually exclusive in
+      # practice: --strict treats a SKIPPED distribution as an error too, so the
+      # pair fails on the very package --skip-editable was told to ignore
+      # (measured, both ways, on runs 32426865667 and 32427099558). Without it, a
+      # dependency pip-audit cannot resolve is a warning in this job's log rather
+      # than a failure — acceptable only because this job is advisory in the first
+      # place. If it is ever made blocking, revisit this line with it.
+      - name: pip-audit
+        run: pip-audit --skip-editable --progress-spinner=off

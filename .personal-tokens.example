@@ -1,0 +1,7 @@
+# Copy to .personal-tokens (git-ignored). One machine-specific token per line — home-path
+# usernames, private emails, signing Team ID/org, other people's names. '#' comments allowed.
+# Used only by packaging/scan_personal_info.py to pre-scan before a public copy.
+your-macos-username
+your-windows-username
+you@example.com
+YOURTEAMID

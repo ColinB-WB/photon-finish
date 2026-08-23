@@ -1,0 +1,98 @@
+# target_curation.yaml -- the ONLY hand-edited data file in the known-targets catalog
+# pipeline (spec docs/history/superpowers/specs/2026-07-25-known-targets-prototype-design.md
+# sec1). `tools/build_known_targets.py` reconciles this against a pinned OpenNGC
+# snapshot directory (tools/data/openngc-<ver>/) to produce the generated, committed,
+# bundled `seestar/data/known_targets.json` -- the ONLY file the app reads at
+# processing time.
+#
+# Catalog facts describe the SKY, never the EDIT (spec sec2 principle 1): no
+# per-target brightness/saturation/denoise/GHS value belongs in this file, ever --
+# only identity, coordinates, catalogued extent, search footprints, morphology, and
+# associated-object relationships. Curation expresses SETS + EXCEPTIONS, never hand-
+# copied catalog facts: every catalog fact (coordinates, extent, type-derived family,
+# derived footprints) comes from OpenNGC. The build tool is FAIL-CLOSED (spec sec4):
+# a malformed or inconsistent entry here stops the build, never warns-and-continues.
+
+schema_version: 2
+
+# --- selection ------------------------------------------------------------------
+# Production population (Plan A, 2026-07-26): the full deduplicated Messier
+# (M1-M110) + Caldwell (C1-C109) sets, resolved deterministically against the pinned
+# OpenNGC snapshot. `include` adds the one non-Messier/Caldwell object the catalog
+# needs: NGC6530, M8's embedded open cluster (an associated_only relational record --
+# see annotations). Expected population (a stop-condition contract): 218 primary
+# records + associated-only NGC6530 = 219 total.
+selection:
+  messier: all
+  caldwell: all
+  include:
+    - ngc6530 # M8's embedded open cluster -- associated_only relational record
+
+# --- resolution -----------------------------------------------------------------
+# Documented abstentions: a designation deliberately left unresolved (no alias, no
+# override), each carrying a `reason`.
+resolution:
+  abstain:
+    M102:
+      reason: >-
+        M102 has no settled identity: it is widely regarded as a duplicate
+        observation of M101 (the Pinwheel Galaxy), while an alternate historical
+        identification points to NGC5866. Rather than alias M102 to M101 (which would
+        double-count that object) or override it to NGC5866 (endorsing the disputed
+        identification), the catalog abstains -- M102 resolves to no record.
+
+# --- annotations ------------------------------------------------------------------
+# EXCEPTION-ONLY. Keyed by the normalized primary OpenNGC id. Every key MUST resolve
+# to a selection-resolved target (an orphan key is a fail-closed BuildError). These
+# migrate ONLY the prototype's curated JUDGMENTS (canonical id, aliases, family
+# overrides, morphology, associations) -- NOT hand-copied catalog facts. In
+# particular the prototype's hand-authored search footprints are DROPPED here in
+# favor of the catalog-derived ellipse/circle (from each row's own OpenNGC extent
+# columns); see validation/known_targets_manifest.md for that decision.
+#
+# Fields:
+#   canonical_id            curated display/primary catalog id.
+#   aliases_add              curated ADDITIONS on top of OpenNGC's own "Common names".
+#   classification_override  curated override of the OpenNGC-Type-derived family;
+#                            requires a `reason` (a judgment call, not a catalog fact).
+#   morphology_traits        curated (OpenNGC carries no morphology vocabulary).
+#   associated                curated relationships to OTHER selected targets.
+#   lookup_role              "primary" (default) or "associated_only" (relational
+#                            metadata only -- excluded from top-level spatial
+#                            candidacy in known_targets.match_target).
+#   search_footprints_override  closed curated {reason, footprints} override of the
+#                            catalog-derived footprint. NOT used by any production
+#                            record -- all production footprints are catalog-derived.
+annotations:
+  ngc6523:
+    canonical_id: M8 # Lagoon Nebula (OpenNGC "Common names" supplies the name)
+    morphology_traits: [emission_nebula, star_forming_region]
+    associated:
+      - canonical_id: NGC6530
+        relationship: embedded_cluster
+    # Footprint: catalog-derived (prototype hand ellipse 90x40 dropped -- see manifest).
+
+  ngc6530:
+    lookup_role: associated_only # embedded cluster inside M8's own footprint -- never an independent spatial candidate (the P1 M8/NGC6530 ambiguity fix)
+    classification_override:
+      family: starfield
+      reason: >-
+        OpenNGC types NGC6530 "Cl+N" (star cluster + nebula) -- a combined code the
+        app's 3-way family taxonomy (nebula/galaxy/starfield) maps to "unknown" by
+        default. NGC6530 is astrophotographically an open cluster/star field target
+        (the nebulosity it sits in is M8/NGC6523's own record, associated via
+        `embedded_in` below) -- curated as "starfield", with this reason.
+    morphology_traits: [open_cluster]
+    associated:
+      - canonical_id: M8
+        relationship: embedded_in
+    # Footprint: catalog-derived (prototype hand circle r7.5 dropped -- see manifest).
+
+  ngc5128:
+    aliases_add: [Cen A] # OpenNGC supplies "Centaurus A"; "Cen A" is a curated addition
+    morphology_traits: [peculiar_galaxy, dust_lane]
+    # Footprint: catalog-derived (prototype hand ellipse 25.7x20 dropped -- see manifest).
+
+  ngc5139:
+    morphology_traits: [globular_cluster, dense_core]
+    # Footprint: catalog-derived (prototype hand circle r18.15 dropped -- see manifest).

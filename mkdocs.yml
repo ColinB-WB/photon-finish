@@ -1,0 +1,64 @@
+site_name: Photon Finish
+site_description: Automated, reproducible finishing for Seestar S30 astrophotography.
+site_url: https://colinb-wb.github.io/photon-finish/
+repo_url: https://github.com/ColinB-WB/photon-finish
+repo_name: ColinB-WB/photon-finish
+docs_dir: docs
+site_dir: build/mkdocs
+
+theme:
+  name: material
+  font: false
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - User manual:
+      - Overview: manual/index.md
+      - Installation: manual/installation.md
+      - Create your first photo: manual/first-photo.md
+      - Use the app: manual/using-the-app.md
+      - How it works: manual/how-it-works.md
+      - Styles and image versions: manual/styles-and-versions.md
+      - Understand the results: manual/understanding-results.md
+      - Fine-tune one image: manual/fine-tuning.md
+      - Capabilities and limits: manual/capabilities-and-limits.md
+      - Troubleshooting: manual/troubleshooting.md
+  - Compatibility: compatibility.md
+  - Privacy and network use: privacy-and-network.md
+  - FAQ: faq.md
+  - Acknowledgements: acknowledgements.md
+  - For contributors:
+      - Developer guide: development/index.md
+      - Architecture: development/architecture.md
+      - Configuration: development/configuration.md
+      - Validation: development/validation.md
+      - Known-target catalog: development/known-target-catalog.md
+      - Releasing: development/releasing.md
+      - Project tenets: TENETS.md
+      - Adaptation inventory: ADAPTATION.md
+      - Extending the engine: EXTENDING.md
+      - Change-safety rules: CHANGE_SAFETY.md
+      - Roadmap: ROADMAP.md
+
+exclude_docs: |
+  BETA_PLAN.md
+  CLEAN_BUILD_TEST.md
+  RELEASE_READINESS.md
+  VALIDATION.md
+  future/
+  history/
+  superpowers/

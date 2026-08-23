@@ -1,0 +1,361 @@
+{
+  "color": {
+    "accepted": true,
+    "attempted": true,
+    "evidence": {
+      "coefficients": [
+        0.471,
+        0.713,
+        1.0
+      ],
+      "detail": "using 330 stars",
+      "few_stars_warning": false,
+      "imprecise": false,
+      "stars_used": 330,
+      "succeeded": true
+    },
+    "fallback": false,
+    "qualified": false,
+    "reason": "evidence_within_bounds"
+  },
+  "deliverables": [
+    {
+      "name": "NGC5128_star-reduced.tif",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_star-reduced.png",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_star-reduced.jpg",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_starless.tif",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_starless.png",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_starless.jpg",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_final.tif",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_final.png",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_final.jpg",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_closeup.tif",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_closeup.png",
+      "role": "deliverable"
+    },
+    {
+      "name": "NGC5128_closeup.jpg",
+      "role": "deliverable"
+    }
+  ],
+  "solve": {
+    "achieved": 72.23999999999998,
+    "asinh_d": 55,
+    "blackpoint": 0.014805,
+    "bp_iterations": 0,
+    "bp_pinned": false,
+    "converged": true,
+    "ght_in_probe": true,
+    "level_base": 72,
+    "level_scale": 1.0,
+    "metric": "body_p90",
+    "mtf_mid": 0.1952,
+    "mtf_pinned": null,
+    "nonmonotonic": false,
+    "probes": [
+      {
+        "blackpoint": 0.014805,
+        "distance": 78.5,
+        "mtf_mid": 0.135,
+        "phase": "mtf",
+        "sky": 7.525,
+        "target_level": 72.0,
+        "value": 150.5
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 3.75,
+        "mtf_mid": 0.1925,
+        "phase": "mtf",
+        "sky": 3.7875,
+        "target_level": 72.0,
+        "value": 75.75
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 33.69,
+        "mtf_mid": 0.2213,
+        "phase": "mtf",
+        "sky": 1.9155000000000002,
+        "target_level": 72.0,
+        "value": 38.31
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 14.97,
+        "mtf_mid": 0.2069,
+        "phase": "mtf",
+        "sky": 2.851499999999999,
+        "target_level": 72.0,
+        "value": 57.02999999999997
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 5.61,
+        "mtf_mid": 0.1997,
+        "phase": "mtf",
+        "sky": 3.319500000000001,
+        "target_level": 72.0,
+        "value": 66.39000000000001
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 0.93,
+        "mtf_mid": 0.1961,
+        "phase": "mtf",
+        "sky": 3.5534999999999997,
+        "target_level": 72.0,
+        "value": 71.07
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 1.41,
+        "mtf_mid": 0.1943,
+        "phase": "mtf",
+        "sky": 3.6705,
+        "target_level": 72.0,
+        "value": 73.41
+      },
+      {
+        "blackpoint": 0.014805,
+        "distance": 0.24,
+        "mtf_mid": 0.1952,
+        "phase": "mtf",
+        "sky": 3.611999999999999,
+        "target_level": 72.0,
+        "value": 72.23999999999998
+      }
+    ],
+    "region_area_frac": 0.08,
+    "region_source": "frozen_object_mask",
+    "sky": 3.611999999999999,
+    "target_level": 72.0
+  },
+  "steps": [
+    {
+      "op": "PrepareSource",
+      "output": {
+        "name": "working_copy",
+        "role": "source"
+      },
+      "session_index": 0
+    },
+    {
+      "height": 1080,
+      "input": {
+        "name": "working_copy",
+        "role": "source"
+      },
+      "mirror_x": true,
+      "op": "Crop",
+      "output": {
+        "name": "cropped",
+        "role": "production"
+      },
+      "width": 1920,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "correction": "Subtraction",
+      "input": {
+        "name": "cropped",
+        "role": "production"
+      },
+      "op": "BackgroundExtract",
+      "output": {
+        "name": "bge",
+        "role": "production"
+      },
+      "smoothing": 0.5
+    },
+    {
+      "input": {
+        "name": "bge",
+        "role": "production"
+      },
+      "op": "Denoise",
+      "output": {
+        "name": "denoised",
+        "role": "production"
+      },
+      "strength": 0.65
+    },
+    {
+      "input": {
+        "name": "denoised",
+        "role": "production"
+      },
+      "op": "ColorCalibrate",
+      "output": {
+        "name": "linear_master",
+        "role": "production"
+      },
+      "pcc": true
+    },
+    {
+      "asinh_d": 55,
+      "black_lift": 0.0,
+      "blackpoint": 0.014805,
+      "ght": {
+        "b": 5.0,
+        "closeup": true,
+        "d": 1.5,
+        "hp": 0.65,
+        "lp": 0.06,
+        "sp": 0.15,
+        "unsharp_amount": 0.0,
+        "unsharp_sigma": 0.0
+      },
+      "input": {
+        "name": "linear_master",
+        "role": "production"
+      },
+      "mtf_mid": 0.1952,
+      "op": "StretchRender",
+      "output": {
+        "name": "stretched",
+        "role": "production"
+      },
+      "saturation": 0.6
+    },
+    {
+      "input": {
+        "name": "stretched",
+        "role": "production"
+      },
+      "op": "SeparateStars",
+      "starless": {
+        "name": "starless",
+        "role": "production"
+      },
+      "stars": {
+        "name": "stars",
+        "role": "production"
+      }
+    },
+    {
+      "k": 0.45,
+      "op": "ScreenBlend",
+      "output": {
+        "name": "reduced",
+        "role": "production"
+      },
+      "starless": {
+        "name": "starless",
+        "role": "production"
+      },
+      "stars": {
+        "name": "stars",
+        "role": "production"
+      }
+    },
+    {
+      "formats": [
+        "tif",
+        "png",
+        "jpg"
+      ],
+      "input": {
+        "name": "reduced",
+        "role": "production"
+      },
+      "jpg_quality": 95,
+      "op": "Export",
+      "output_base": "NGC5128_star-reduced",
+      "role": "deliverable"
+    },
+    {
+      "formats": [
+        "tif",
+        "png",
+        "jpg"
+      ],
+      "input": {
+        "name": "starless",
+        "role": "production"
+      },
+      "jpg_quality": 95,
+      "op": "Export",
+      "output_base": "NGC5128_starless",
+      "role": "deliverable"
+    },
+    {
+      "formats": [
+        "tif",
+        "png",
+        "jpg"
+      ],
+      "input": {
+        "name": "stretched",
+        "role": "production"
+      },
+      "jpg_quality": 95,
+      "op": "Export",
+      "output_base": "NGC5128_final",
+      "role": "deliverable"
+    },
+    {
+      "box": [
+        10,
+        10,
+        100,
+        100
+      ],
+      "input": {
+        "name": "stretched",
+        "role": "production"
+      },
+      "op": "CropTo",
+      "output": {
+        "name": "closeup_cropped",
+        "role": "production"
+      }
+    },
+    {
+      "formats": [
+        "tif",
+        "png",
+        "jpg"
+      ],
+      "input": {
+        "name": "closeup_cropped",
+        "role": "production"
+      },
+      "jpg_quality": 95,
+      "op": "Export",
+      "output_base": "NGC5128_closeup",
+      "role": "deliverable"
+    }
+  ]
+}

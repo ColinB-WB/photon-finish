@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Photon Finish</title>
+<link rel="icon" href="/static/favicon.svg">
+<link rel="stylesheet" href="/static/app.css">
+<script type="module" src="/static/app.js"></script>
+</head>
+<body>
+<header id="app-header">
+  <div class="title"><span class="glyph">🔭</span>Photon Finish</div>
+  <div class="sub">Get a finished photo without editing it yourself. Your original captures are never changed.</div>
+</header>
+<main>
+  <section class="card" id="controls-card">
+    <h3>1. Choose your Seestar photos</h3>
+    <p class="section-note">Select your copied Seestar folder, then find the photos inside it.</p>
+    <div class="row">
+      <label class="field grow">Seestar photos folder · Required
+        <input id="library" type="text" placeholder="No folder selected" autocomplete="off" spellcheck="false">
+      </label>
+      <button id="library-browse" type="button">Browse…</button>
+    </div>
+    <button id="scan" type="button" class="secondary">Find photos</button>
+    <h4>Photos found</h4>
+    <div id="targets"><div class="empty-table">No photos found yet.</div></div>
+    <p id="scan-message" class="section-note"></p>
+    <details id="scan-detail" hidden><summary>Technical details</summary><p id="scan-detail-text"></p></details>
+    <h3>2. Choose what to create</h3>
+    <label class="field">Photo · Required
+      <select id="which"></select>
+      <span class="hint">Choose one photo. The all-photos option is a longer batch.</span>
+    </label>
+    <label class="field">Output style · Required
+      <select id="profile">
+        <option value="showcase">Showcase — vivid, share-ready</option>
+        <option value="natural">Natural — restrained, realistic color</option>
+        <option value="documentation">Reference — faithful, with annotation</option>
+        <option value="print">Print — tuned for paper</option>
+      </select>
+      <span class="hint">A style controls the overall look. One style may create several useful image versions.</span>
+    </label>
+    <h3>3. Choose where to save</h3>
+    <div class="row">
+      <label class="field grow">Save folder · Required
+        <input id="output" type="text" placeholder="No folder selected" autocomplete="off" spellcheck="false">
+      </label>
+      <button id="output-browse" type="button">Browse…</button>
+    </div>
+    <button id="render" type="button" class="primary">Create finished photo</button>
+    <p class="section-note">The first photo may take extra time while processing components are prepared.</p>
+    <p id="status" role="status"></p>
+    <button id="stop" type="button" class="secondary" hidden>Finish this photo, then stop</button>
+    <details id="fine-tune" hidden>
+      <summary>Advanced: manually adjust this image</summary>
+      <p class="section-note">Optional and technical: open the saved adjustment file in a text editor, change a your_value, save it, then re-create the same style.</p>
+      <div class="row">
+        <button id="open-recipe" type="button">Open adjustment file</button>
+        <button id="rerender" type="button">Re-create using saved adjustments</button>
+      </div>
+    </details>
+    <div class="row" id="quit-row" hidden>
+      <button id="quit" type="button" class="danger">⏻ Quit Photon Finish</button>
+    </div>
+  </section>
+  <section class="card wide" id="results-card">
+    <h3>Your finished images</h3>
+    <p class="section-note">The Recommended image is the main result. Other labeled versions are created from the same output style for different uses.</p>
+    <div id="gallery" class="gallery"></div>
+    <div id="qa"></div>
+  </section>
+</main>
+<div id="lightbox" hidden><img alt=""></div>
+</body>
+</html>

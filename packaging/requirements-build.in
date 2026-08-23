@@ -1,0 +1,6 @@
+# Input for the frozen-app build lock (macOS arm64 / CPython 3.12 only).
+# The project's own runtime + gui dependencies come from pyproject.toml (--extra gui);
+# this file adds the build-only tools that pyproject deliberately does not declare.
+# Regenerate the lock with the pinned pip-tools documented in
+# docs/development/releasing.md ("Pinned frozen-app build environment").
+pyinstaller

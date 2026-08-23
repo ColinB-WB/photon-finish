@@ -1,0 +1,4 @@
+prune tests
+prune docs/history/superpowers
+prune experiments
+prune validation
