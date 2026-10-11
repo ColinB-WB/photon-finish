@@ -44,7 +44,13 @@ $AppName = "Photon Finish"
 # see docs/development/releasing.md.)
 Write-Host "Recreating the build venv (.venv-build) with Python 3.12 -- no pytest..."
 if (Test-Path $BuildVenv) { Remove-Item -Recurse -Force $BuildVenv }
-py -3.12 -m venv $BuildVenv
+# CI (and any machine without the `py` launcher) can point the build at a specific
+# interpreter; locally the launcher selects 3.12 to match the macOS build lock.
+if ($env:SEESTAR_BUILD_PYTHON) {
+    & $env:SEESTAR_BUILD_PYTHON -m venv $BuildVenv
+} else {
+    py -3.12 -m venv $BuildVenv
+}
 $Py = Join-Path $BuildVenv "Scripts\python.exe"
 
 & $Py -m pip install --quiet --upgrade pip
@@ -56,11 +62,21 @@ foreach ($p in @("build", "dist\$AppName", "dist\$AppName.exe", "$AppName.spec")
     if (Test-Path $p) { Remove-Item -Recurse -Force $p }
 }
 
-Write-Host "Running PyInstaller (this takes a few minutes)..."
+# ONEFILE vs ONEDIR. --onefile self-extracts ~100 DLLs/.pyd files into a fresh
+# %TEMP%\_MEIxxxx directory on every launch, uses them, then deletes them. That is
+# indistinguishable from dropper malware to an ML classifier: VirusTotal labelled the
+# v1.1.0 onefile build "dropper" and Microsoft Defender flagged it
+# Trojan:Win32/Wacatac.B!ml (2026-08-31, 5/69 engines, Defender among them).
+# --onedir ships those files beside the exe, so nothing is written at runtime and the
+# behaviour that earned the detection does not happen. Set SEESTAR_BUILD_ONEDIR=1 to
+# build that way.
+$OneDir = [bool]$env:SEESTAR_BUILD_ONEDIR
+$ModeFlag = if ($OneDir) { "--onedir" } else { "--onefile" }
+Write-Host "Running PyInstaller ($ModeFlag; this takes a few minutes)..."
 & $Py -m PyInstaller --noconfirm --clean `
   --name "$AppName" `
   --windowed `
-  --onefile `
+  $ModeFlag `
   --add-data "config.yaml;." `
   --add-data "seestar\data\known_targets.json;seestar\data" `
   --add-data "seestar\gui\static;seestar\gui\static" `
@@ -87,4 +103,8 @@ if (-not $VersionLine) { throw "Could not read __version__ from seestar\__init__
 $Version = $VersionLine.Matches[0].Groups[1].Value
 
 Write-Host ""
-Write-Host "Built: dist\$AppName.exe  (version $Version, single-file, no install step)"
+if ($OneDir) {
+    Write-Host "Built: dist\$AppName\  (version $Version, folder build -- ship the whole folder, zipped)"
+} else {
+    Write-Host "Built: dist\$AppName.exe  (version $Version, single-file, no install step)"
+}

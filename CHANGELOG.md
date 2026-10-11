@@ -3,6 +3,34 @@
 Notable user-visible changes are recorded here. This project follows
 [Semantic Versioning](https://semver.org/) after v1.0.
 
+## [Unreleased]
+
+## [1.1.1] - 2026-10-09
+
+### Changed
+
+- The ZWO Seestar S50 is now listed as supported. Its stacked color FITS files
+  were already processed correctly; the documentation now says so.
+- The documentation explains each processing step in plain language: what
+  changes in your photo, which application does it, what Photon Finish decides
+  for you, and what to do if you don't like the result.
+- The app window is dark again, always. v1.1.0 followed the desktop's light/dark
+  setting, so a light desktop got a light app — the Gradio GUI it replaced had
+  forced dark for every user. Dark is now fixed: Photon Finish is used at night,
+  and a bright panel next to the photo biases the eye judging its background and
+  stars. Native controls and scrollbars follow the dark palette now too, which
+  they never did.
+
+### Fixed
+
+- The Browse buttons in the Windows app window did nothing at all — no dialog, no
+  error, no message. Both buttons, every time. pywebview builds its Windows folder
+  dialog on whichever thread calls it, and the app serves that request from a
+  worker thread, where the dialog hangs forever and blocks the second button too.
+  Windows now opens the folder chooser the same way the browser mode always has,
+  in a separate process, which is safe from any thread. macOS is unaffected and
+  keeps its native dialog. Typing a path by hand was the only workaround.
+
 ## [1.1.0] - 2026-08-21
 
 ### Changed

@@ -7,8 +7,9 @@ uncertainty.
 
 ## Release status
 
-v1.0.0 and v1.1.0 shipped for macOS as signed, notarized applications, verified on
-a clean machine against the committed reference renders. Windows runs from source
+v1.0.0, v1.1.0, and v1.1.1 shipped for macOS as signed, notarized applications,
+each checked by installing the released app and comparing a real render against
+the committed reference results. Windows runs from source
 and its test suite runs on every change, but it has not been verified hands-on and
 has no packaged application yet — see [Compatibility](compatibility.md).
 

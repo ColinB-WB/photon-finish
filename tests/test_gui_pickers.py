@@ -4,6 +4,9 @@ These are the browser-mode pickers (spec §6) — window mode uses the native
 pywebview dialog. No gradio import: this file must run in the post-Task-7
 gradio-free environment too."""
 
+import sys
+import types
+
 import pytest  # noqa: F401
 
 from seestar.gui import pickers
@@ -137,3 +140,60 @@ def test_open_in_editor_success_message_on_zero_exit(tmp_path, monkeypatch):
     msg = pickers.open_in_editor(str(p))
     assert "Opened" in msg
     assert "**" not in msg and "`" not in msg
+
+
+def test_window_mode_on_windows_uses_the_subprocess_picker_not_the_native_dialog(monkeypatch):
+    """Windows must not use pywebview's native folder dialog, even though a window exists.
+
+    pywebview's winforms backend calls the folder dialog directly on the CALLING
+    thread (platforms/winforms.py::create_file_dialog) -- unlike every other UI
+    operation in that same backend, which marshals through Control.Invoke
+    (lines 398, 461, 483, 499, 545, 595, 649, 839, 1047). FastAPI runs the sync
+    /api/pick-folder route in a threadpool worker, so the dialog gets created off
+    the UI thread, where it HANGS FOREVER holding pick_lock: both Browse buttons
+    dead, no dialog on screen, and nothing in the log (the diagnostic print only
+    runs after the call returns). Reproduced live on Windows 11, 2026-08-31.
+
+    The subprocess picker is thread-safe by construction -- a child process owns
+    its own main thread -- and still shows the real native Windows chooser.
+    """
+    import seestar.gui as gui
+
+    class NativeDialogWindow:
+        def create_file_dialog(self, *a, **k):
+            raise AssertionError("the native dialog hangs off-thread on Windows")
+
+    monkeypatch.setattr(gui.sys, "platform", "win32")
+    monkeypatch.setattr(gui.pickers, "pick_directory", lambda current: "C:/picked")
+
+    pick = gui._make_pick_folder({"window": NativeDialogWindow()})
+
+    assert pick("C:/start") == "C:/picked"
+
+
+def test_window_mode_on_macos_keeps_the_native_dialog(monkeypatch):
+    """macOS marshals the dialog to the main thread correctly (cocoa.py:
+    AppHelper.callAfter + semaphore), so it keeps the better-integrated,
+    app-modal native dialog rather than shelling out."""
+    import seestar.gui as gui
+
+    class NativeDialogWindow:
+        def create_file_dialog(self, *a, **k):
+            return ["/Users/x/picked"]
+
+    def must_not_run(current):
+        raise AssertionError("macOS must keep the native pywebview dialog")
+
+    # pywebview is the `desktop` extra, deliberately NOT installed for tests (it drags
+    # pyobjc on macOS -- pyproject.toml, spec 9), and CI installs only .[dev,gui]. This
+    # test is about PLATFORM ROUTING, not about pywebview, so stub the import rather
+    # than depend on it: requiring the real module turned all five CI jobs red while
+    # the suite stayed green locally, where the venv happens to have it.
+    fake_webview = types.SimpleNamespace(FileDialog=types.SimpleNamespace(FOLDER="folder"))
+    monkeypatch.setitem(sys.modules, "webview", fake_webview)
+    monkeypatch.setattr(gui.sys, "platform", "darwin")
+    monkeypatch.setattr(gui.pickers, "pick_directory", must_not_run)
+
+    pick = gui._make_pick_folder({"window": NativeDialogWindow()})
+
+    assert pick("/Users/x") == "/Users/x/picked"

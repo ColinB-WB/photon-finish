@@ -6,6 +6,7 @@
 |---|---|
 | ZWO Seestar S30 | Supported |
 | ZWO Seestar S30 Pro | Supported |
+| ZWO Seestar S50 | Supported |
 | Qualifying stacked color FITS | Supported |
 | Stock Seestar JPG as input | Not supported |
 | Raw subframes | Not supported |

@@ -6,4 +6,4 @@ Three layers (see CLAUDE.md):
   - forks    : composition options (star treatment, framing) within a profile
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"

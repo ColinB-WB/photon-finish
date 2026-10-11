@@ -25,9 +25,11 @@ data.
    folder.
 7. Choose **Create finished photo**.
 
-The app reports its current stage and elapsed time. GraXpert and StarNet2 can
-take a while, especially on the first run. Closing the app or computer during
-processing stops the render.
+The app reports its current stage and elapsed time. Expect several minutes per
+photo, and longer on the first run. S30 Pro frames take noticeably longer: the
+GraXpert noise-reduction stage alone can run 6–8 minutes with no visible
+progress, which is normal. Closing the app or computer during processing stops
+the render.
 
 ## Review the result
 

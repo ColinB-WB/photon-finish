@@ -1,6 +1,6 @@
 # Photon Finish: better Seestar photos, with less editing
 
-Photon Finish turns the stacked color FITS from a ZWO Seestar S30 or S30 Pro
+Photon Finish turns the stacked color FITS from a ZWO Seestar S30, S30 Pro, or S50
 into a finished photograph. It is for hobby astrophotographers who want to
 spend their time capturing the sky—not learning a sequence of specialist
 photo-editing applications.
@@ -12,6 +12,20 @@ images plus an understandable result check.
 
 [Install the app](manual/installation.md){ .md-button .md-button--primary }
 [Create a first photo](manual/first-photo.md){ .md-button }
+
+<!-- PLACEHOLDER: before/after images pending from the owner. Restore the
+"## Example results" heading above the table when adding them. Same files as
+the README (docs/images/), referenced relative to docs/. Replace this comment
+with the table below once the files exist.
+
+| Seestar's own JPG | Photon Finish |
+|---|---|
+| ![M8 from the Seestar app](images/m8-before.jpg) | ![M8 from Photon Finish](images/m8-after.jpg) |
+| ![M81 from the Seestar app](images/m81-before.jpg) | ![M81 from Photon Finish](images/m81-after.jpg) |
+| ![M13 from the Seestar app](images/m13-before.jpg) | ![M13 from Photon Finish](images/m13-after.jpg) |
+
+Same stacked capture in both columns; only the processing differs.
+-->
 
 ## What you can expect
 
@@ -25,6 +39,9 @@ images plus an understandable result check.
 - A galaxy close-up when the subject and data warrant one.
 - A high-quality TIFF, PNG, share-ready JPG, embedded metadata, and a processing
   record.
+
+[How it works](manual/how-it-works.md) shows each step: what changes in your
+photo, which application does it, and what Photon Finish decides and why.
 
 The result is not generated or painted. The app works only with signal already
 present in the stacked FITS. If the capture is limiting, it says so.
@@ -48,7 +65,7 @@ The processor:
 
 - starts from a qualifying Seestar stacked color `.fit` or `.fits` file;
 - runs locally and treats the source library as read-only;
-- supports the S30 and S30 Pro;
+- supports the S30, S30 Pro, and S50;
 - makes deterministic, explainable choices from measurements, filter
   information, and bounded catalog evidence; and
 - provides an optional recipe when you want to adjust one result.

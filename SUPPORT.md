@@ -10,7 +10,8 @@ Before opening a report:
 
 ## Reporting a problem
 
-When the public repository enables issues, include:
+Open an issue at
+<https://github.com/ColinB-WB/photon-finish/issues> and include:
 
 - operating system and version;
 - whether you used the packaged Mac app or ran from source;

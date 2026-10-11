@@ -263,6 +263,50 @@ class RunningServer:
             return stopped
 
 
+def _make_pick_folder(window_ref: dict):
+    """Build the window-mode folder picker.
+
+    WINDOWS TAKES THE SUBPROCESS PICKER even though a native window exists.
+    pywebview's winforms backend calls the folder dialog directly on the CALLING
+    thread (platforms/winforms.py::create_file_dialog) -- unlike every other UI
+    operation in that same backend, which marshals through Control.Invoke. FastAPI
+    runs the sync /api/pick-folder route in a threadpool worker, so the native
+    dialog would be built off the UI thread, where it HANGS FOREVER holding
+    pick_lock: both Browse buttons dead, no dialog on screen, and an empty log --
+    the diagnostic print below only runs once the call returns. Reproduced live on
+    Windows 11 (2026-08-31). The subprocess picker is thread-safe by construction
+    (a child process owns its own main thread) and still shows the real native
+    Windows folder chooser.
+
+    macOS marshals correctly (cocoa.py: AppHelper.callAfter + a semaphore), so it
+    keeps the native dialog, which is properly app-modal and parented to the window.
+    """
+
+    def pick_folder(current: str):
+        w = window_ref.get("window")
+        if w is None or sys.platform.startswith("win"):
+            return pickers.pick_directory(current) or None
+        import webview
+
+        start = current if current and os.path.isdir(current) else os.path.expanduser("~")
+        try:
+            picked = w.create_file_dialog(webview.FileDialog.FOLDER, directory=start)
+        except Exception as e:
+            # Never swallow this: a dialog that fails looks IDENTICAL to a cancel
+            # from the front end (both leave the old path on screen), which reads
+            # as "the app reverted my choice" — a silent degrade (tenet 7). Logged
+            # for diagnosis and re-raised so the API answers with a real message.
+            print(f"[pick_folder] native dialog raised: {type(e).__name__}: {e}", file=sys.stderr)
+            raise
+        # Gate fact (2026-08-12): returns a LIST of paths; None/empty on cancel.
+        # Logged either way — an owner report of "it reverts" is unanswerable
+        # without knowing whether the dialog returned nothing or was cancelled.
+        print(f"[pick_folder] start={start!r} returned={picked!r}", file=sys.stderr)
+        return picked[0] if picked else None
+
+    return pick_folder
+
+
 def start_server(cfg=None, *, port=None, mode="browser", hooks=None) -> RunningServer:
     """Bind -> build -> start -> wait ready (spec §3 startup order). Used by main()
     and by the frozen selftest (SEESTAR_SELFTEST=gui-server). Raises OSError on a
@@ -316,27 +360,7 @@ def start_server(cfg=None, *, port=None, mode="browser", hooks=None) -> RunningS
         auth = AuthState()
         window_ref = {"window": None}
 
-        def pick_folder(current: str):
-            w = window_ref.get("window")
-            if w is None:
-                return pickers.pick_directory(current) or None
-            import webview
-
-            start = current if current and os.path.isdir(current) else os.path.expanduser("~")
-            try:
-                picked = w.create_file_dialog(webview.FileDialog.FOLDER, directory=start)
-            except Exception as e:
-                # Never swallow this: a dialog that fails looks IDENTICAL to a cancel
-                # from the front end (both leave the old path on screen), which reads
-                # as "the app reverted my choice" — a silent degrade (tenet 7). Logged
-                # for diagnosis and re-raised so the API answers with a real message.
-                print(f"[pick_folder] native dialog raised: {type(e).__name__}: {e}", file=sys.stderr)
-                raise
-            # Gate fact (2026-08-12): returns a LIST of paths; None/empty on cancel.
-            # Logged either way — an owner report of "it reverts" is unanswerable
-            # without knowing whether the dialog returned nothing or was cancelled.
-            print(f"[pick_folder] start={start!r} returned={picked!r}", file=sys.stderr)
-            return picked[0] if picked else None
+        pick_folder = _make_pick_folder(window_ref)
 
         app = create_app(
             registry=registry,

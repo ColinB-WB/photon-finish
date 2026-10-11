@@ -1,26 +1,22 @@
 /* Photon Finish theme — indigo accent + slate neutrals + OS system fonts
-   (offline-safe, native feel). Dark via prefers-color-scheme: our own CSS,
-   no ?__theme workaround (spec §7). No inline styles anywhere (CSP). */
+   (offline-safe, native feel). Dark is the FIXED look, not an OS-following
+   variant: this app is used at night, and a bright panel beside the photo
+   biases the eye that judges its background and stars. `color-scheme: dark`
+   carries that to the native controls (select, text inputs, scrollbars,
+   focus rings), which otherwise render in light OS chrome. Our own CSS, so
+   there is no ?__theme reload workaround (spec §7) either way.
+   No inline styles anywhere (CSP). */
 
 :root {
+  color-scheme: dark;
   --accent: #4f46e5;
   --accent-press: #4338ca;
-  --bg: #f8fafc;
-  --panel: #ffffff;
-  --text: #0f172a;
-  --text-subdued: #64748b;
-  --border: #e2e8f0;
-  --danger: #b91c1c;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1120;
-    --panel: #111a2e;
-    --text: #e2e8f0;
-    --text-subdued: #94a3b8;
-    --border: #24324d;
-    --danger: #f87171;
-  }
+  --bg: #0b1120;
+  --panel: #111a2e;
+  --text: #e2e8f0;
+  --text-subdued: #94a3b8;
+  --border: #24324d;
+  --danger: #f87171;
 }
 
 * { box-sizing: border-box; }

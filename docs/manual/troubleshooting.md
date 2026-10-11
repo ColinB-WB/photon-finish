@@ -32,7 +32,7 @@ Check that:
 
 - you selected the copied Seestar target or library folder;
 - the folder contains a `.fit` or `.fits` stacked color master;
-- the file is from a Seestar S30 or S30 Pro; and
+- the file is from a Seestar S30, S30 Pro, or S50; and
 - the source is a stack, not an individual raw subframe.
 
 Filenames do not need to start with `Stacked_`. If FITS files were skipped, the

@@ -102,6 +102,17 @@ creating ceremonial evidence for risks that are absent.
   deviations, and any new behavior. Mechanical task reports may omit inapplicable red/green
   evidence.
 - Stop only for contradictions, unexpected behavior changes, or new owner decisions.
+- **A push is not finished until CI is green.** Watch the run to completion after every push
+  (`gh run watch <id> --exit-status`; get the id from `gh run list --branch main --limit 1
+  --workflow tests`), and fix or revert a red `main` before starting anything else. Never
+  report a push as done on the strength of a local suite alone.
+- **A green local suite does not predict CI.** Tests install `.[dev,gui]`; the `desktop` extra
+  (pywebview) is deliberately excluded because it drags pyobjc on macOS — but a dev venv
+  usually *has* it. A test that reaches an optional import therefore passes locally and fails
+  everywhere else: on 2026-08-31 exactly this turned all five jobs red while the suite was
+  green on the author's machine. When a change touches code with an optional import, re-run
+  the suite with that module made unimportable (a `sys.meta_path` hook that raises for it)
+  before pushing.
 
 ## Invariant tests
 

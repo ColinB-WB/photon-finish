@@ -78,7 +78,9 @@ You do not need Python or a terminal to use that application.
 
 1. Install the four specialist applications above, using the StarNet2 CLI
    package.
-2. Open the `Photon Finish.dmg`.
+2. Download `Photon Finish.dmg` from the
+   [latest release](https://github.com/ColinB-WB/photon-finish/releases/latest)
+   and open it.
 3. Drag **Photon Finish** into **Applications**.
 4. Open **Photon Finish** from Applications.
 5. Follow [Create your first photo](first-photo.md).

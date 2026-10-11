@@ -2,7 +2,7 @@
 
 ## Supported in v1
 
-- ZWO Seestar S30 and S30 Pro stacked, three-channel color FITS files.
+- ZWO Seestar S30, S30 Pro, and S50 stacked, three-channel color FITS files.
 - Seestar library folders and single-target folders.
 - Compact and emission nebulae, galaxies, globular and open-cluster fields.
 - Showcase, Natural, Reference, and Print output styles.

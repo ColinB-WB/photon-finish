@@ -2,7 +2,7 @@
 
 The canonical installation instructions are in the user manual:
 
-**[Install the Seestar Photo Processor](docs/manual/installation.md)**
+**[Install Photon Finish](docs/manual/installation.md)**
 
 That guide covers:
 

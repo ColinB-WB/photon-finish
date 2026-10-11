@@ -6,34 +6,57 @@ the fuller data in the stacked FITS into a finished photograph.
 Nothing in the process paints new nebula, stars, or galaxy detail. Each step is
 intended to reveal or present signal that the telescope actually recorded.
 
-## The processing journey
+## Who does what
 
-1. **Qualify the source.** The app confirms that the file is a stacked,
-   three-channel Seestar capture and reads its filter, integration, date, and
-   sky-coordinate information.
-2. **Measure before deciding.** It measures background, noise, stars, scale, and
-   visible structure. These measurements drive processing choices.
-3. **Prepare the frame.** It corrects the known orientation convention and crops
-   unusable stack borders.
-4. **Even out the sky.** GraXpert removes broad gradients caused by light
-   pollution, moonlight, or uneven illumination.
-5. **Reduce noise.** GraXpert denoises within conservative limits chosen for the
-   kind and quality of signal in the frame.
-6. **Develop color and brightness.** Siril calibrates color where appropriate
-   and stretches faint data into a range the eye and screen can see. A stretch
-   brightens faint structure much more than already-bright stars and cores.
-7. **Treat visible structure.** Bounded, content-aware steps can lift a nebula's
-   envelope, preserve a galaxy's dust lane, or protect the resolved stars in a
-   cluster.
-8. **Handle trails and stars.** Detected satellite trails are conservatively
-   repaired where possible. StarNet2 can separate stars from an extended
-   subject so the app can prepare full-star, reduced-star, and starless
-   versions.
-9. **Compose useful versions.** A galaxy may receive a close-up; clusters keep
-   their stars because the stars are the subject.
-10. **Export and check.** The app writes finished files, uses ExifTool to embed
-    capture and processing metadata, records its decisions, and checks the hero
-    image against category-aware quality gates.
+The four helper applications do the image processing. Each one is a powerful
+tool, but each needs the right settings for each photo, and the right settings
+change from one subject to the next. Photon Finish's job is the part you would
+otherwise do by hand:
+
+- **measure** the photo: sky brightness, noise, stars, and how much nebula or
+  galaxy structure is present;
+- **decide** which steps to run and with what settings, from those measurements
+  and the filter the Seestar used—never from the object's name;
+- **run** each helper application with those settings, in the right order; and
+- **check** the finished photo for known failures before calling it ready.
+
+## What happens to your photo, step by step
+
+| Step | What changes in your photo | Done by | What Photon Finish decides for you |
+|---|---|---|---|
+| 1. Check the file | Nothing yet | Photon Finish | Makes sure the file is a photo the Seestar stacked, and reads the details the Seestar saved with it: filter, number of exposures, date, and where in the sky it was pointing. |
+| 2. Measure | Nothing yet | Photon Finish | Measures how bright the sky is, how grainy the photo is, how many stars there are, and how much nebula or galaxy is visible. Every choice below is based on these measurements. |
+| 3. Orientation and edges | The photo is the right way up, and any ragged edges left by stacking are trimmed | Siril | Turns the photo to match the Seestar's own picture. Trims an edge only if it is actually damaged, so a clean photo keeps all of its sky. |
+| 4. Satellite trails | Satellite and airplane streaks fade into the sky | Photon Finish | Finds long straight streaks and fills them in from the sky around them. If a streak can't be removed cleanly, it is left alone rather than smeared. |
+| 5. Sky glow | Glow from light pollution or the moon is removed, so the sky is even | GraXpert | Nothing—this step works the same way on every photo. |
+| 6. Grain | Smoother sky; faint detail is easier to see | GraXpert | How much smoothing to use. Faint galaxies and short sessions get more. Star clusters get enough to bring out their faintest stars, but not so much that the stars blur together. |
+| 7. Color | Natural-looking color and a sky without a color tint | Siril | Whether to correct the color, based on the filter and the subject. Nebulae keep the Seestar's own color, so their red glow stays red instead of turning pink. Galaxies are corrected so they don't come out orange. Star clusters are left alone so they don't turn pink. |
+| 8. Brightness | Faint nebula, galaxy, or cluster becomes visible against a dark sky | Siril | How much to brighten. This is the most important choice. Photon Finish keeps the sky dark without hiding the faint stars in it, then brightens the subject to a consistent level and checks the result, trying again until it gets there. |
+| 9. Detail | The faint outer parts of a nebula, a galaxy's arms and dust lanes, or a cluster's glow are brought out | Siril | How much to bring out, based on the subject. Only in the Showcase and Print styles. |
+| 10. Color strength | Richer color | Siril | How vivid to make the color. Star clusters get a little less, because too much makes them look pink. |
+| 11. Star versions | Extra versions with fewer stars or no stars | StarNet2 separates the stars; Siril blends them back | Whether to make these versions. Only for nebulae and galaxies; star clusters always keep their stars, because the stars are the subject. The recommended photo keeps every star. |
+| 12. Close-up | An extra close-up version | Siril | Whether a close-up is worth making, and where to frame it. Only for galaxies that are small in the frame; the main photo always shows the whole field. |
+| 13. Save | 16-bit TIFF, PNG, and JPG files, labeled with the target, date, filter, and settings | Siril saves; ExifTool writes the labels | Nothing—this step works the same way on every photo. |
+| 14. Check | The result says Ready to use, Finished—capture-limited, or Needs attention | Photon Finish | Looks for common problems—a gray or pitch-black sky, missing stars, blown-out bright areas, unnaturally bright color, or a flipped photo—and tells you if it finds one. |
+
+These choices come from testing on real Seestar captures and comparing against
+the Seestar's own output, not from rules of thumb.
+
+## If you don't like the result
+
+Your original Seestar file is never changed, so you can always set the result
+aside and start again. Or:
+
+- **Try another style.** Natural is gentler than the default Showcase. See
+  [Styles and versions](styles-and-versions.md).
+- **Change one step.** Every photo comes with an adjustment file listing each
+  choice in the table above: the value Photon Finish picked, the application
+  that applied it, and what a wrong value looks like. Change only the ones you
+  disagree with and re-create the photo; everything else is decided as usual.
+  See [Fine-tune one image](fine-tuning.md).
+- **Take over by hand.** Open the 16-bit TIFF in any photo editor, or start
+  from your original file in GraXpert and Siril, using the adjustment file as
+  a map of what was done.
 
 ## How the app knows what it is looking at
 
@@ -65,8 +88,8 @@ the image. See [Privacy and network use](../privacy-and-network.md).
 ## Why use existing applications?
 
 GraXpert, Siril, StarNet2, and ExifTool each solve a difficult specialist problem
-well. The app's role is orchestration: select a suitable operation, calculate or
-bound its settings, pass work to the appropriate tool, and check the result.
+well, and Photon Finish does not try to replace them. Its contribution is the
+table above: the measuring, the per-photo settings, the order, and the checks.
 
 If you eventually want detailed manual control, the emitted adjustment recipe
 also tells you which application owns each kind of adjustment.
