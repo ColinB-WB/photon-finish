@@ -1,7 +1,8 @@
-# Build "Photon Finish" as a single self-contained Windows .exe (its own Python + all
-# deps) via PyInstaller --onefile -- one file to download and double-click, matching
-# the Mac DMG's no-install-step feel. Trade-off: --onefile self-extracts to a fresh
-# temp directory on every launch, so startup is a few seconds slower than --onedir.
+# Build "Photon Finish" for Windows: a self-contained PyInstaller --onedir folder (its own
+# Python + all deps, dist\Photon Finish\), then wrapped by Inno Setup into one
+# "dist\Photon Finish Setup.exe" to download and double-click (packaging\photon_finish.iss
+# says why an installer and not a zip). Requires Inno Setup 6 (https://jrsoftware.org/isdl.php);
+# set SEESTAR_ISCC to ISCC.exe if it is not on PATH or in its default install location.
 #
 # Mirrors packaging/build_app.sh (macOS): a DEDICATED build venv (.venv-build) so the
 # frozen app is built from a clean, known set of dependencies rather than whatever is
@@ -58,25 +59,22 @@ $Py = Join-Path $BuildVenv "Scripts\python.exe"
 Write-Host "Build venv: $(& $Py --version)"
 
 Write-Host "Cleaning previous build..."
-foreach ($p in @("build", "dist\$AppName", "dist\$AppName.exe", "$AppName.spec")) {
+foreach ($p in @("build", "dist\$AppName", "dist\$AppName.exe", "dist\$AppName Setup.exe", "$AppName.spec")) {
     if (Test-Path $p) { Remove-Item -Recurse -Force $p }
 }
 
-# ONEFILE vs ONEDIR. --onefile self-extracts ~100 DLLs/.pyd files into a fresh
+# ONEDIR, never ONEFILE. --onefile self-extracts ~100 DLLs/.pyd files into a fresh
 # %TEMP%\_MEIxxxx directory on every launch, uses them, then deletes them. That is
 # indistinguishable from dropper malware to an ML classifier: VirusTotal labelled the
 # v1.1.0 onefile build "dropper" and Microsoft Defender flagged it
 # Trojan:Win32/Wacatac.B!ml (2026-08-31, 5/69 engines, Defender among them).
-# --onedir ships those files beside the exe, so nothing is written at runtime and the
-# behaviour that earned the detection does not happen. Set SEESTAR_BUILD_ONEDIR=1 to
-# build that way.
-$OneDir = [bool]$env:SEESTAR_BUILD_ONEDIR
-$ModeFlag = if ($OneDir) { "--onedir" } else { "--onefile" }
-Write-Host "Running PyInstaller ($ModeFlag; this takes a few minutes)..."
+# --onedir ships those files beside the exe, so nothing is written at runtime; the
+# 2026-10-17 onedir build scanned clean on Microsoft and Symantec.
+Write-Host "Running PyInstaller (--onedir; this takes a few minutes)..."
 & $Py -m PyInstaller --noconfirm --clean `
   --name "$AppName" `
   --windowed `
-  $ModeFlag `
+  --onedir `
   --add-data "config.yaml;." `
   --add-data "seestar\data\known_targets.json;seestar\data" `
   --add-data "seestar\gui\static;seestar\gui\static" `
@@ -102,9 +100,21 @@ $VersionLine = Select-String -Path "$Here\seestar\__init__.py" -Pattern '^__vers
 if (-not $VersionLine) { throw "Could not read __version__ from seestar\__init__.py" }
 $Version = $VersionLine.Matches[0].Groups[1].Value
 
-Write-Host ""
-if ($OneDir) {
-    Write-Host "Built: dist\$AppName\  (version $Version, folder build -- ship the whole folder, zipped)"
+$Iscc = if ($env:SEESTAR_ISCC) {
+    $env:SEESTAR_ISCC
+} elseif (Get-Command ISCC.exe -ErrorAction SilentlyContinue) {
+    (Get-Command ISCC.exe).Source
 } else {
-    Write-Host "Built: dist\$AppName.exe  (version $Version, single-file, no install step)"
+    @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+      "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe") |
+        Where-Object { Test-Path $_ } | Select-Object -First 1
 }
+if (-not $Iscc) {
+    throw "Inno Setup 6 not found. Install it from https://jrsoftware.org/isdl.php or set SEESTAR_ISCC to ISCC.exe."
+}
+Write-Host "Packaging the installer with $Iscc ..."
+& $Iscc /Qp "/DAppVersion=$Version" packaging\photon_finish.iss
+if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
+
+Write-Host ""
+Write-Host "Built: dist\$AppName Setup.exe  (version $Version; installs the dist\$AppName\ folder build)"

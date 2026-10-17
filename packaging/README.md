@@ -58,13 +58,21 @@ Ship `dist/Photon Finish.dmg`. Recipients open it, drag the app to Applications,
 ```
 powershell -File packaging\build_app_windows.ps1
 ```
-Produces a single `dist\Photon Finish.exe` (PyInstaller `--onefile`; self-contained, own
-Python + all deps — no folder, no zip, no install step, matching the Mac DMG's one-file
-feel). Mirrors `build_app.sh`: a dedicated `.venv-build` recreated from scratch every run
-(Python 3.12, no pytest, same astropy/wcsaxes reasoning as macOS), PyInstaller `--onefile`
-freeze. **Unsigned** — there is no Windows equivalent of `sign_notarize_dmg.sh` yet, so
-first launch shows a SmartScreen "Windows protected your PC" prompt; only a paid
-code-signing certificate removes that.
+Produces `dist\Photon Finish Setup.exe`: an Inno Setup installer (`photon_finish.iss`)
+wrapping a PyInstaller `--onedir` folder (`dist\Photon Finish\`, self-contained, own Python
++ all deps). It installs per user, without an admin prompt, to
+`%LOCALAPPDATA%\Programs\Photon Finish` with a Start menu entry and an uninstaller. Needs
+[Inno Setup 6](https://jrsoftware.org/isdl.php) (or `SEESTAR_ISCC` pointing at `ISCC.exe`).
+Mirrors `build_app.sh`: a dedicated `.venv-build` recreated from scratch every run
+(Python 3.12, no pytest, same astropy/wcsaxes reasoning as macOS).
+
+Why not the simpler options: `--onefile` was flagged by Defender (`Wacatac.B!ml`), and a
+zip of the folder fails because Explorer marks every extracted file as downloaded and .NET
+then refuses to load pythonnet. `photon_finish.iss` has the details. Local antivirus
+(Norton) quarantines the build on the maintainer's machine, so build through the
+`windows-build` workflow. **Unsigned** — there is no Windows equivalent of
+`sign_notarize_dmg.sh` yet, so the installer shows a SmartScreen "Windows protected your
+PC" prompt; only a paid code-signing certificate removes that.
 
 **Always test by double-clicking the `.exe`, never by launching it from a terminal.** A
 `--windowed` PyInstaller app launched with no console gets `sys.stdout`/`sys.stderr` set to

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Attach the locally-built macOS DMG and Windows exe to a GitHub Release.
+"""Attach the macOS DMG and Windows installer to a GitHub Release.
 
-Both artifacts are built fully manually and locally (packaging/build_app.sh +
-sign_notarize_dmg.sh on macOS, packaging/build_app_windows.ps1 on Windows) --
-this script only wraps the `gh release create` upload so a two-artifact
-release is one command. No CI, no stored secrets
-(docs/development/releasing.md).
+The DMG is built locally (packaging/build_app.sh + sign_notarize_dmg.sh); the
+Windows installer is built by packaging/build_app_windows.ps1, normally through
+the windows-build workflow because local antivirus quarantines the build. This
+script only wraps the `gh release create` upload so a two-artifact release is
+one command. No stored secrets (docs/development/releasing.md).
 
   python -m packaging.publish_release --tag v1.0.0 \\
     --dmg "dist/Photon Finish.dmg" \\
-    --windows-exe "dist/Photon Finish.exe" \\
+    --windows-exe "dist/Photon Finish Setup.exe" \\
     --repo ColinB-WB/photon-finish
 
 Run with `-m`, matching packaging/export_public_repo.py's invocation, so both
