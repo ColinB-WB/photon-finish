@@ -1,0 +1,94 @@
+name: windows-build
+
+# NOT on every push. A PyInstaller build takes minutes and a docs commit cannot change
+# its output, so this runs only when asked (workflow_dispatch: one-off checks, antivirus
+# behaviour tests).
+#
+# Deliberately NO `push: tags: v*` trigger yet. On the public copy a release tag would
+# build the --onefile exe that Defender flags (see below) and publish it as a downloadable
+# artifact. Add the tag trigger back once a Windows build has passed an antivirus scan and
+# a hands-on test.
+#
+# Prefer running this on the PUBLIC photon-finish copy: Actions minutes are free there,
+# while a private repo meters them and Windows runners bill at 2x. `.github/` is not in
+# packaging/public_export.exclude, so the export carries this file to that copy; with no
+# tag trigger, that is safe.
+#
+# Why this exists at all: on the maintainer's Windows machine Norton quarantines the
+# freshly built exe as a generic heuristic before PyInstaller can even finish, so the
+# binary cannot be produced locally. A hosted runner has no such scanner in the way.
+on:
+  workflow_dispatch:
+    inputs:
+      onedir:
+        description: "Build as a FOLDER (--onedir) instead of a single .exe"
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: Photon Finish.exe
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Build the app
+        shell: pwsh
+        env:
+          # --onefile self-extracts ~100 DLLs into %TEMP% on every launch, which reads as
+          # dropper behaviour to an ML classifier: VirusTotal labelled the v1.1.0 onefile
+          # build "dropper", with Microsoft Defender flagging Trojan:Win32/Wacatac.B!ml
+          # (2026-08-31, 5/69). --onedir ships those files beside the exe instead, so the
+          # runtime extraction never happens. Default stays onefile until a scan proves
+          # the folder build is cleaner.
+          SEESTAR_BUILD_ONEDIR: ${{ inputs.onedir && '1' || '' }}
+        run: |
+          # Reuse the real build script instead of restating its PyInstaller flag list.
+          # Two copies of that list would drift, and this script is what a maintainer
+          # actually runs by hand. It recreates its own .venv-build, which costs a minute
+          # or two -- worth it to keep ONE definition of the build.
+          $env:SEESTAR_BUILD_PYTHON = (Get-Command python).Source
+          powershell -ExecutionPolicy Bypass -File packaging\build_app_windows.ps1
+
+      - name: Selftest the frozen binary
+        shell: pwsh
+        run: |
+          # The frozen-only gates from docs/CLEAN_BUILD_TEST.md section 3. None can be
+          # checked from source: each exercises PyInstaller's frozen filesystem
+          # (package data, the static UI, a real server boot through the launch-token
+          # exchange). Headless, so CI can run them -- the double-click window test
+          # still needs a human and is NOT covered here.
+          #
+          # Start-Process -Wait is required, not stylistic: the app is built --windowed
+          # (GUI subsystem), so PowerShell does not wait for it and $LASTEXITCODE would
+          # be meaningless. A windowed build also has no stdout, so the selftest output
+          # lands in the app log, which we print for diagnosis.
+          $exe = if ("${{ inputs.onedir }}" -eq "true") {
+            ".\dist\Photon Finish\Photon Finish.exe"
+          } else {
+            ".\dist\Photon Finish.exe"
+          }
+          if (-not (Test-Path $exe)) { throw "expected build output not found: $exe" }
+          Write-Host "testing: $exe"
+          $log = "$env:LOCALAPPDATA\Photon Finish\logs\app.log"
+          foreach ($t in @("known-targets", "gui-static", "gui-server")) {
+            $env:SEESTAR_SELFTEST = $t
+            $p = Start-Process -FilePath $exe -Wait -PassThru
+            if (Test-Path $log) { Write-Host "--- app.log after $t ---"; Get-Content $log -Tail 20 }
+            if ($p.ExitCode -ne 0) { throw "selftest '$t' failed with exit code $($p.ExitCode)" }
+            Write-Host "selftest '$t' OK"
+          }
+
+      - name: Upload the build
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          # upload-artifact zips whatever it is given, so the onedir folder arrives as a
+          # single download either way.
+          name: photon-finish-windows-${{ inputs.onedir && 'folder' || 'exe' }}
+          path: ${{ inputs.onedir && 'dist/Photon Finish/' || 'dist/Photon Finish.exe' }}
+          if-no-files-found: error
